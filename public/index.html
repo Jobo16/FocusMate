@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FocusMate Transcription Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div class="badge">FocusMate · Zero-Click Demo</div>
+        <h1>实时转录 · 移动端展示</h1>
+        <p>先做一个最小可用的演示：点击开始，模拟转录流持续出现。</p>
+      </header>
+
+      <section class="panel">
+        <div class="controls">
+          <button id="recordBtn" class="record">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="label">开始转录</span>
+          </button>
+          <div class="status" id="status">未连接</div>
+        </div>
+
+        <div class="meter">
+          <div class="bar" id="meterBar"></div>
+        </div>
+
+        <div class="transcript" id="transcript">
+          <div class="placeholder">转录文本会出现在这里…</div>
+        </div>
+      </section>
+
+      <footer class="footnote">
+        <span>Demo 只展示 UI 与流程，DashScope 接入点已预留。</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
