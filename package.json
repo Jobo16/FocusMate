@@ -1,0 +1,18 @@
+{
+  "name": "focusmate-v2",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "dev": "pnpm --filter @focusmate/shared build && concurrently -n server,web -c blue,green \"pnpm --filter @focusmate/server dev\" \"pnpm --filter @focusmate/web dev --host 0.0.0.0\"",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm --filter @focusmate/shared build && pnpm -r --filter '!@focusmate/shared' typecheck",
+    "test": "pnpm -r test",
+    "clean": "rm -rf apps/*/dist packages/*/dist node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  }
+}
