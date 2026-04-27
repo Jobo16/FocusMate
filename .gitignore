@@ -4,6 +4,7 @@ coverage
 .vite
 .turbo
 .cache
+.playwright-cli
 .env
 .env.local
 .env.*.local

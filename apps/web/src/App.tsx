@@ -106,7 +106,7 @@ export const App = () => {
   const statusOk = listening;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
+    <main className="mx-auto flex h-dvh w-full max-w-xl flex-col overflow-hidden px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
       <header className="mb-4 flex items-center justify-between gap-3">
         <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-moss/75">FocusMate</div>
         <div
@@ -141,7 +141,7 @@ export const App = () => {
         </button>
       </section>
 
-      <section className="flex flex-1 flex-col items-center justify-center gap-6 py-6">
+      <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 py-6">
         <RecoveryButton disabled={!listening || !sessionId} recovering={recovering} onRecover={recover} />
         <div className="w-full">
           <WindowSelector value={windowSeconds} onChange={(value: RecoveryWindowSeconds) => setWindowSeconds(value)} />
