@@ -24,7 +24,7 @@ export const buildFallbackRecoveryCard = (
     title: "我刚刚错过了什么？",
     mode,
     windowSeconds,
-    summary: sentences.slice(-2).join("") || text.slice(-90),
+    summary: sentences.slice(-5).join("") || text.slice(-220),
     action,
     resumePoint: latestSentence ? buildResumePoint(mode, latestSentence) : buildEmptyResumePoint(mode),
     keyPoints: sentences.slice(-3).map((sentence) => sentence.replace(/[。！？]$/u, "")).filter(Boolean),

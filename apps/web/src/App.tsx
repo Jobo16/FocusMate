@@ -22,7 +22,6 @@ export const App = () => {
     windowSeconds,
     card,
     recovering,
-    transcriptOpen,
     setSessionId,
     setConnectionState,
     setStatusMessage,
@@ -32,7 +31,6 @@ export const App = () => {
     addTranscript,
     setCard,
     setRecovering,
-    setTranscriptOpen,
     resetTranscript
   } = useFocusMateStore();
 
@@ -93,7 +91,6 @@ export const App = () => {
   const recover = async () => {
     if (!sessionId) return;
     setRecovering(true);
-    setTranscriptOpen(false);
     try {
       const response = await requestRecoveryCard(sessionId, windowSeconds, mode);
       setCard(response.card);
@@ -150,8 +147,6 @@ export const App = () => {
 
       <RecoverySheet
         card={card}
-        transcriptOpen={transcriptOpen}
-        onTranscriptOpenChange={setTranscriptOpen}
         onClose={() => setCard(null)}
       />
     </main>

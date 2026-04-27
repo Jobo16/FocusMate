@@ -40,3 +40,12 @@ select {
 button {
   -webkit-tap-highlight-color: transparent;
 }
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
