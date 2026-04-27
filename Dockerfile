@@ -1,4 +1,6 @@
-FROM node:22-alpine AS build
+ARG NODE_IMAGE=node:22-alpine
+
+FROM ${NODE_IMAGE} AS build
 
 WORKDIR /app
 
@@ -19,7 +21,7 @@ RUN pnpm --filter @focusmate/shared build \
   && pnpm --filter @focusmate/server build \
   && pnpm prune --prod
 
-FROM node:22-alpine AS runner
+FROM ${NODE_IMAGE} AS runner
 
 WORKDIR /app
 
