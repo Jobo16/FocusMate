@@ -1,5 +1,6 @@
 import type { RecoveryCard } from "@focusmate/shared";
-import { Sparkles, X } from "lucide-react";
+import { Check, Copy, Sparkles, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useRef, useState, type PointerEvent } from "react";
 
 type RecoverySheetProps = {
@@ -10,6 +11,7 @@ type RecoverySheetProps = {
 export const RecoverySheet = ({ card, onClose }: RecoverySheetProps) => {
   const [dragOffset, setDragOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [transcriptCopied, setTranscriptCopied] = useState(false);
   const dragStartY = useRef(0);
   const dragOffsetRef = useRef(0);
   const pointerId = useRef<number | null>(null);
@@ -39,6 +41,12 @@ export const RecoverySheet = ({ card, onClose }: RecoverySheetProps) => {
     setDragging(false);
     setDragOffset(0);
     if (shouldClose) onClose();
+  };
+
+  const copyTranscript = async () => {
+    await writeClipboardText(card.transcript);
+    setTranscriptCopied(true);
+    window.setTimeout(() => setTranscriptCopied(false), 1400);
   };
 
   return (
@@ -80,18 +88,63 @@ export const RecoverySheet = ({ card, onClose }: RecoverySheetProps) => {
         <ContentBlock label={copy.summaryLabel} content={card.summary} />
         <ContentBlock label={copy.actionLabel} content={card.action} />
         <ContentBlock label={copy.resumeLabel} content={card.resumePoint} />
-        <ContentBlock label={copy.transcriptLabel} content={card.transcript} muted />
+        <ContentBlock
+          label={copy.transcriptLabel}
+          content={card.transcript}
+          muted
+          action={
+            <button
+              type="button"
+              onClick={copyTranscript}
+              className="grid h-7 w-7 place-items-center rounded-full bg-black/5 text-ink/65 transition active:scale-95"
+              aria-label="复制原文逐字稿"
+              title="复制原文逐字稿"
+            >
+              {transcriptCopied ? <Check className="h-3.5 w-3.5 text-moss" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          }
+        />
       </div>
     </div>
   );
 };
 
-const ContentBlock = ({ label, content, muted = false }: { label: string; content: string; muted?: boolean }) => (
+const ContentBlock = ({
+  label,
+  content,
+  muted = false,
+  action
+}: {
+  label: string;
+  content: string;
+  muted?: boolean;
+  action?: ReactNode;
+}) => (
   <section className="mb-5 last:mb-0">
-    <strong className="mb-1.5 block text-[15px] font-semibold text-ink">{label}</strong>
+    <div className="mb-1.5 flex items-center justify-between gap-3">
+      <strong className="block text-[15px] font-semibold text-ink">{label}</strong>
+      {action}
+    </div>
     <p className={`whitespace-pre-wrap ${muted ? "text-sm text-ink/65" : "text-ink"}`}>{content}</p>
   </section>
 );
+
+const writeClipboardText = async (text: string) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+};
 
 const CARD_COPY = {
   classroom: {
