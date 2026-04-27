@@ -20,8 +20,7 @@ COPY apps apps
 COPY packages packages
 
 RUN pnpm --filter @focusmate/shared build \
-  && pnpm --filter @focusmate/server build \
-  && pnpm prune --prod
+  && pnpm --filter @focusmate/server build
 
 FROM ${NODE_IMAGE} AS runner
 
