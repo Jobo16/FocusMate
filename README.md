@@ -1,16 +1,17 @@
 # FocusMate v2
 
-FocusMate v2 is a mobile-first classroom recovery prototype.
+FocusMate v2 is a mobile-first live context recovery prototype.
 
 The product answers one urgent classroom question:
 
 > 我刚刚错过了什么？
 
-It is not a generic transcript page, note-taking app, chatbot, or full class summary tool. The first version is a manual recovery card: the student taps once, FocusMate reads the recent transcript buffer, then returns a short Chinese card that helps the student rejoin the class.
+It is not a generic transcript page, note-taking app, chatbot, meeting-minutes bot, or full class summary tool. The first version is a manual recovery card: the user taps once, FocusMate reads the recent transcript buffer, then returns a short Chinese card that helps them rejoin the live situation.
 
 ## Current MVP
 
 - Mobile-first web app, optimized for phone use in class.
+- Mode switch: `课堂 / 会议`.
 - Manual trigger: `我刚刚错过了什么？`
 - Recovery windows: 30 seconds, 60 seconds, 3 minutes.
 - Recovery card sections:
@@ -21,6 +22,7 @@ It is not a generic transcript page, note-taking app, chatbot, or full class sum
 - Realtime audio capture through browser microphone.
 - DashScope realtime ASR support, with mock transcript fallback.
 - OpenAI-compatible LLM recovery-card generation, with local fallback.
+- Mode-specific prompts and recovery-card labels.
 
 ## Tech Stack
 
@@ -44,7 +46,7 @@ apps/
   server/     Fastify API, WebSocket, ASR relay, recovery generation
 packages/
   shared/     Zod schemas and shared TypeScript types
-  prompts/    Recovery-card prompt
+  prompts/    Mode-specific recovery-card prompts
 docs/
   architecture.md
   getting-started.md
@@ -105,7 +107,8 @@ pnpm test       # Vitest, currently no test files yet
 - [Data Flow](docs/data-flow.md)
 - [API and Protocols](docs/api.md)
 - [Development Guide](docs/development.md)
-- [Office Hours Product Decision](docs/office-hours/office-hours-20260426-225918-classroom-recovery-card.md)
+- [Classroom Office Hours Decision](docs/office-hours/office-hours-20260426-225918-classroom-recovery-card.md)
+- [Live Context Recovery and Meeting Mode](docs/office-hours/office-hours-20260427-155758-live-context-recovery-meetings.md)
 
 ## Important Product Boundary
 
@@ -117,4 +120,4 @@ Keep the MVP narrow:
 4. No automatic prompts until manual recovery proves useful.
 5. First useful card should appear in 3-8 seconds.
 
-If a change pushes the app toward "full transcript dashboard" or "AI note-taking platform," it is probably outside the current MVP.
+If a change pushes the app toward "full transcript dashboard," "AI note-taking platform," or "meeting minutes bot," it is probably outside the current MVP.

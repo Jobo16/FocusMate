@@ -9,8 +9,11 @@ export const TranscriptSegmentSchema = z.object({
   source: z.enum(["dashscope", "mock", "manual"]).default("dashscope")
 });
 
+export const RecoveryModeSchema = z.enum(["classroom", "meeting"]);
+
 export const RecoveryCardSchema = z.object({
   title: z.string().default("我刚刚错过了什么？"),
+  mode: RecoveryModeSchema.default("classroom"),
   windowSeconds: z.number(),
   summary: z.string(),
   action: z.string(),
@@ -22,6 +25,7 @@ export const RecoveryCardSchema = z.object({
 
 export const RecoverRequestSchema = z.object({
   sessionId: z.string().min(1),
+  mode: RecoveryModeSchema.default("classroom"),
   windowSeconds: z.union([z.literal(30), z.literal(60), z.literal(180)]).default(60)
 });
 
@@ -70,6 +74,7 @@ export const ServerWsMessageSchema = z.discriminatedUnion("type", [
 ]);
 
 export type TranscriptSegment = z.infer<typeof TranscriptSegmentSchema>;
+export type RecoveryMode = z.infer<typeof RecoveryModeSchema>;
 export type RecoveryCard = z.infer<typeof RecoveryCardSchema>;
 export type RecoverRequest = z.infer<typeof RecoverRequestSchema>;
 export type RecoverResponse = z.infer<typeof RecoverResponseSchema>;
@@ -78,3 +83,5 @@ export type ServerWsMessage = z.infer<typeof ServerWsMessageSchema>;
 
 export const RECOVERY_WINDOWS = [30, 60, 180] as const;
 export type RecoveryWindowSeconds = (typeof RECOVERY_WINDOWS)[number];
+
+export const RECOVERY_MODES = ["classroom", "meeting"] as const satisfies readonly RecoveryMode[];

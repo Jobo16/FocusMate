@@ -9,6 +9,7 @@ Keep the MVP narrow.
 Allowed:
 
 - improve manual recovery-card flow
+- improve mode-specific classroom/meeting recovery
 - improve mobile classroom UI
 - improve ASR reliability
 - improve transcript buffering
@@ -19,6 +20,7 @@ Avoid for now:
 
 - full transcript dashboard
 - full class summary
+- full meeting minutes
 - account system
 - saved course history
 - automatic interruption prompts
@@ -41,7 +43,7 @@ When changing request/response shapes:
 
 When changing recovery quality:
 
-1. Start with `packages/prompts/recovery-card.md`.
+1. Start with `packages/prompts/recovery-card-classroom.md` or `packages/prompts/recovery-card-meeting.md`.
 2. Update `apps/server/src/recovery/modelClient.ts` only if the model contract changes.
 3. Update `apps/server/src/recovery/fallback.ts` if local dev behavior should match.
 
@@ -66,6 +68,7 @@ pnpm test
 - TypeScript end-to-end.
 - Keep shared contracts in `packages/shared`.
 - Keep prompt text in `packages/prompts`.
+- Keep modes explicit. Current modes are `classroom` and `meeting`.
 - Keep route handlers thin.
 - Keep the browser UI focused on listening state, recovery trigger, and recovery sheet.
 - Do not put API keys or secrets in source files.

@@ -1,4 +1,4 @@
-import { RecoveryCardSchema, type RecoveryCard, type TranscriptSegment } from "@focusmate/shared";
+import { RecoveryCardSchema, type RecoveryCard, type RecoveryMode, type TranscriptSegment } from "@focusmate/shared";
 import { z } from "zod";
 import { buildFallbackRecoveryCard } from "./fallback.js";
 import { loadRecoveryPrompt } from "./prompt.js";
@@ -19,7 +19,8 @@ export type GenerateRecoveryResult = {
 
 export const generateRecoveryCard = async (
   segments: TranscriptSegment[],
-  windowSeconds: number
+  windowSeconds: number,
+  mode: RecoveryMode = "classroom"
 ): Promise<GenerateRecoveryResult> => {
   const transcript = segments.map((segment) => segment.text).join("");
   const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
@@ -28,14 +29,14 @@ export const generateRecoveryCard = async (
 
   if (!apiKey || !transcript.trim()) {
     return {
-      card: buildFallbackRecoveryCard(segments, windowSeconds),
+      card: buildFallbackRecoveryCard(segments, windowSeconds, mode),
       model: apiKey ? "fallback-empty-transcript" : "fallback-no-llm-key",
       usedFallback: true
     };
   }
 
   try {
-    const systemPrompt = await loadRecoveryPrompt();
+    const systemPrompt = await loadRecoveryPrompt(mode);
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -52,6 +53,7 @@ export const generateRecoveryCard = async (
             role: "user",
             content: JSON.stringify({
               windowSeconds,
+              mode,
               transcript
             })
           }
@@ -68,6 +70,7 @@ export const generateRecoveryCard = async (
     const parsed = ModelPayloadSchema.parse(JSON.parse(content));
     const card = RecoveryCardSchema.parse({
       title: "我刚刚错过了什么？",
+      mode,
       windowSeconds,
       ...parsed,
       transcript
@@ -80,7 +83,7 @@ export const generateRecoveryCard = async (
     };
   } catch {
     return {
-      card: buildFallbackRecoveryCard(segments, windowSeconds),
+      card: buildFallbackRecoveryCard(segments, windowSeconds, mode),
       model: `${model}:fallback`,
       usedFallback: true
     };

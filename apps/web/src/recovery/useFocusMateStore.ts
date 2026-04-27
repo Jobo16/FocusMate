@@ -1,4 +1,4 @@
-import type { RecoveryCard, RecoveryWindowSeconds, TranscriptSegment } from "@focusmate/shared";
+import type { RecoveryCard, RecoveryMode, RecoveryWindowSeconds, TranscriptSegment } from "@focusmate/shared";
 import { create } from "zustand";
 
 type ConnectionState = "idle" | "connecting" | "listening" | "stopped" | "error";
@@ -9,6 +9,7 @@ type FocusMateState = {
   statusMessage: string;
   secondsAvailable: number;
   segmentCount: number;
+  mode: RecoveryMode;
   windowSeconds: RecoveryWindowSeconds;
   transcript: TranscriptSegment[];
   card: RecoveryCard | null;
@@ -18,6 +19,7 @@ type FocusMateState = {
   setConnectionState: (state: ConnectionState) => void;
   setStatusMessage: (message: string) => void;
   setBufferStats: (stats: { secondsAvailable: number; segmentCount: number }) => void;
+  setMode: (mode: RecoveryMode) => void;
   setWindowSeconds: (windowSeconds: RecoveryWindowSeconds) => void;
   addTranscript: (segment: TranscriptSegment) => void;
   setCard: (card: RecoveryCard | null) => void;
@@ -32,6 +34,7 @@ export const useFocusMateStore = create<FocusMateState>((set) => ({
   statusMessage: "未连接",
   secondsAvailable: 0,
   segmentCount: 0,
+  mode: "classroom",
   windowSeconds: 60,
   transcript: [],
   card: null,
@@ -41,6 +44,7 @@ export const useFocusMateStore = create<FocusMateState>((set) => ({
   setConnectionState: (connectionState) => set({ connectionState }),
   setStatusMessage: (statusMessage) => set({ statusMessage }),
   setBufferStats: ({ secondsAvailable, segmentCount }) => set({ secondsAvailable, segmentCount }),
+  setMode: (mode) => set({ mode, card: null, transcriptOpen: false }),
   setWindowSeconds: (windowSeconds) => set({ windowSeconds }),
   addTranscript: (segment) =>
     set((state) => ({

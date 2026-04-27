@@ -2,8 +2,8 @@ import { useRef } from "react";
 import type { RecoveryWindowSeconds } from "@focusmate/shared";
 import { Mic, Square } from "lucide-react";
 import { startAudioClient, type AudioClient } from "./audio/audioClient";
-import { StatusPill } from "./components/StatusPill";
 import { requestRecoveryCard } from "./recovery/recoverClient";
+import { ModeSelector } from "./recovery/ModeSelector";
 import { RecoveryButton } from "./recovery/RecoveryButton";
 import { RecoverySheet } from "./recovery/RecoverySheet";
 import { useFocusMateStore } from "./recovery/useFocusMateStore";
@@ -18,7 +18,7 @@ export const App = () => {
     sessionId,
     connectionState,
     statusMessage,
-    secondsAvailable,
+    mode,
     windowSeconds,
     card,
     recovering,
@@ -27,6 +27,7 @@ export const App = () => {
     setConnectionState,
     setStatusMessage,
     setBufferStats,
+    setMode,
     setWindowSeconds,
     addTranscript,
     setCard,
@@ -71,11 +72,11 @@ export const App = () => {
       socket.send({ type: "config", sampleRate: audio.sampleRate });
       socket.send({ type: "start" });
       setConnectionState("listening");
-      setStatusMessage("正在听课");
+      setStatusMessage(copy.listeningStatus);
     } catch {
       socket.send({ type: "start" });
       setConnectionState("listening");
-      setStatusMessage("麦克风不可用，已进入模拟课堂");
+      setStatusMessage(`麦克风不可用，已进入模拟${copy.shortLabel}`);
     }
   };
 
@@ -94,43 +95,57 @@ export const App = () => {
     setRecovering(true);
     setTranscriptOpen(false);
     try {
-      const response = await requestRecoveryCard(sessionId, windowSeconds);
+      const response = await requestRecoveryCard(sessionId, windowSeconds, mode);
       setCard(response.card);
     } finally {
       setRecovering(false);
     }
   };
 
+  const copy = MODE_COPY[mode];
+  const statusOk = listening;
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-8 pt-[max(20px,env(safe-area-inset-top))]">
-      <header className="mb-6">
-        <div className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-moss/80">FocusMate</div>
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight text-ink">课堂断线恢复</h1>
-        <p className="mt-3 text-base leading-relaxed text-ink/60">手机放在桌上听课。断线时点一下，拿到最近内容的恢复卡片。</p>
+    <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-moss/75">FocusMate</div>
+        <div
+          className={`h-3.5 w-3.5 rounded-full shadow-sm ring-4 ${
+            statusOk ? "bg-emerald-500 ring-emerald-500/15" : "bg-red-500 ring-red-500/15"
+          }`}
+          aria-label={statusOk ? "收听中" : statusMessage}
+          title={statusOk ? "收听中" : statusMessage}
+        />
       </header>
 
-      <StatusPill state={connectionState} message={statusMessage} secondsAvailable={secondsAvailable} />
-
-      <section className="flex flex-1 flex-col items-center justify-center gap-7 py-8">
-        <RecoveryButton disabled={!listening || !sessionId} recovering={recovering} onRecover={recover} />
-        <div className="w-full">
-          <WindowSelector value={windowSeconds} onChange={(value: RecoveryWindowSeconds) => setWindowSeconds(value)} />
-          <p className="mt-3 text-center text-xs leading-relaxed text-ink/50">默认回溯 60 秒。先接回课堂，原文只作核对。</p>
+      <section className="mt-3 flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <ModeSelector value={mode} disabled={listening} onChange={setMode} />
         </div>
-      </section>
-
-      <section className="grid gap-3">
         <button
           type="button"
           onClick={listening ? stopListening : startListening}
-          className={`flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-base font-semibold transition active:scale-[0.99] ${
-            listening ? "bg-white text-ink ring-1 ring-black/10" : "bg-coral text-white shadow-lg shadow-coral/20"
+          className={`relative h-14 w-20 shrink-0 rounded-full p-1.5 shadow-sm ring-1 transition active:scale-[0.98] ${
+            listening ? "bg-ink ring-ink/10" : "bg-white/85 ring-black/10"
           }`}
+          aria-label={listening ? "关闭收听" : "开启收听"}
+          title={listening ? "关闭收听" : "开启收听"}
         >
-          {listening ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          {listening ? "停止听课" : "开始听课"}
+          <span
+            className={`grid h-11 w-11 place-items-center rounded-full shadow-sm transition-transform ${
+              listening ? "translate-x-6 bg-coral text-white" : "translate-x-0 bg-coral text-white"
+            }`}
+          >
+            {listening ? <Square className="h-4 w-4" /> : <Mic className="h-5 w-5" />}
+          </span>
         </button>
-        <p className="text-center text-xs leading-relaxed text-ink/45">MVP 阶段只做手动触发，不自动弹出提示。</p>
+      </section>
+
+      <section className="flex flex-1 flex-col items-center justify-center gap-6 py-6">
+        <RecoveryButton disabled={!listening || !sessionId} recovering={recovering} onRecover={recover} />
+        <div className="w-full">
+          <WindowSelector value={windowSeconds} onChange={(value: RecoveryWindowSeconds) => setWindowSeconds(value)} />
+        </div>
       </section>
 
       <RecoverySheet
@@ -142,3 +157,14 @@ export const App = () => {
     </main>
   );
 };
+
+const MODE_COPY = {
+  classroom: {
+    shortLabel: "课堂",
+    listeningStatus: "正在听课"
+  },
+  meeting: {
+    shortLabel: "会议",
+    listeningStatus: "正在听会"
+  }
+} as const;

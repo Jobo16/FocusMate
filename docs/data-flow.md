@@ -84,7 +84,7 @@ User taps "我刚刚错过了什么？"
   -> recover.ts
   -> TranscriptBuffer.getRecent(windowSeconds)
   -> modelClient.ts
-  -> recovery-card.md prompt
+  -> recovery-card-classroom.md or recovery-card-meeting.md prompt
   -> RecoveryCard JSON
   -> RecoverySheet.tsx
 ```
@@ -99,7 +99,8 @@ Key files:
 - `apps/server/src/routes/recover.ts`
 - `apps/server/src/recovery/modelClient.ts`
 - `apps/server/src/recovery/fallback.ts`
-- `packages/prompts/recovery-card.md`
+- `packages/prompts/recovery-card-classroom.md`
+- `packages/prompts/recovery-card-meeting.md`
 - `apps/web/src/recovery/RecoverySheet.tsx`
 
 ## Shared Contract Chain
@@ -116,6 +117,7 @@ Do not duplicate request or response shapes in app code. Add or change fields in
 Core shared types:
 
 - `TranscriptSegment`
+- `RecoveryMode`
 - `RecoveryCard`
 - `RecoverRequest`
 - `RecoverResponse`
@@ -132,6 +134,7 @@ Microphone audio
   -> DashScope or mock transcript
   -> rolling transcript buffer
   -> user manual recovery trigger
+  -> selected mode: classroom or meeting
   -> recent transcript window
   -> LLM or fallback recovery card
   -> mobile bottom sheet

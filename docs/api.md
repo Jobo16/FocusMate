@@ -29,9 +29,15 @@ Request:
 ```json
 {
   "sessionId": "websocket-session-id",
+  "mode": "classroom",
   "windowSeconds": 60
 }
 ```
+
+Allowed `mode` values:
+
+- `classroom`
+- `meeting`
 
 Allowed `windowSeconds` values:
 
@@ -45,6 +51,7 @@ Response:
 {
   "card": {
     "title": "我刚刚错过了什么？",
+    "mode": "classroom",
     "windowSeconds": 60,
     "summary": "刚刚老师在讲...",
     "action": "老师刚刚要求...",

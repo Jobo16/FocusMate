@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    "./recovery-card": "./recovery-card.md"
+    "./recovery-card-classroom": "./recovery-card-classroom.md",
+    "./recovery-card-meeting": "./recovery-card-meeting.md"
   }
 }

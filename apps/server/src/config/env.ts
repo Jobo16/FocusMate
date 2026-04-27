@@ -1,0 +1,11 @@
+import { config } from "dotenv";
+import path from "node:path";
+
+const candidates = [
+  path.resolve(process.cwd(), ".env"),
+  path.resolve(process.cwd(), "../../.env")
+];
+
+for (const envPath of candidates) {
+  config({ path: envPath, override: false, quiet: true });
+}

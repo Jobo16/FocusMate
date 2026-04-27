@@ -17,7 +17,7 @@ export const registerRecoverRoutes = (app: FastifyInstance, sessions: SessionSto
 
     sessions.touch(session.id);
     const segments = session.buffer.getRecent(parsed.data.windowSeconds);
-    const result = await generateRecoveryCard(segments, parsed.data.windowSeconds);
+    const result = await generateRecoveryCard(segments, parsed.data.windowSeconds, parsed.data.mode);
     const response = RecoverResponseSchema.parse({
       ...result,
       generatedAt: Date.now()

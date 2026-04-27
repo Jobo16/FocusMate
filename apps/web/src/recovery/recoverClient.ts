@@ -1,8 +1,9 @@
-import { RecoverResponseSchema, type RecoverResponse, type RecoveryWindowSeconds } from "@focusmate/shared";
+import { RecoverResponseSchema, type RecoverResponse, type RecoveryMode, type RecoveryWindowSeconds } from "@focusmate/shared";
 
 export const requestRecoveryCard = async (
   sessionId: string,
-  windowSeconds: RecoveryWindowSeconds
+  windowSeconds: RecoveryWindowSeconds,
+  mode: RecoveryMode
 ): Promise<RecoverResponse> => {
   const response = await fetch("/api/recover", {
     method: "POST",
@@ -11,6 +12,7 @@ export const requestRecoveryCard = async (
     },
     body: JSON.stringify({
       sessionId,
+      mode,
       windowSeconds
     })
   });
