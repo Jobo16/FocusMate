@@ -4,6 +4,8 @@ FROM ${NODE_IMAGE} AS build
 
 WORKDIR /app
 
+ENV CI=true
+
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
