@@ -1,0 +1,14 @@
+.git
+node_modules
+apps/*/dist
+packages/*/dist
+coverage
+.vite
+.turbo
+.cache
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+*.tsbuildinfo
