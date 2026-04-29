@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BookOpen, BriefcaseBusiness, Mail } from "lucide-react";
 import {
   RECOVERY_WINDOWS,
@@ -6,6 +7,7 @@ import {
 } from "@focusmate/shared";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { useSettingsStore } from "../stores/settingsStore";
+import { useUsageStore } from "../stores/usageStore";
 
 const MODE_OPTIONS = [
   {
@@ -29,6 +31,21 @@ const WINDOW_LABELS: Record<RecoveryWindowSeconds, string> = {
 export const SettingsPage = () => {
   const { defaultMode, defaultWindow, setDefaultMode, setDefaultWindow } =
     useSettingsStore();
+  const redeemCode = useUsageStore((s) => s.redeemCode);
+  const quotaUnlocked = useUsageStore((s) => s.quotaUnlocked);
+  const [code, setCode] = useState("");
+  const [redeemResult, setRedeemResult] = useState<"ok" | "fail" | null>(null);
+
+  const handleRedeem = () => {
+    if (redeemCode(code.trim())) {
+      setRedeemResult("ok");
+      setCode("");
+    } else {
+      setRedeemResult("fail");
+      setCode("");
+    }
+    setTimeout(() => setRedeemResult(null), 2000);
+  };
 
   return (
     <div className="flex flex-col gap-8 overflow-y-auto pb-4 pt-2">
@@ -80,6 +97,43 @@ export const SettingsPage = () => {
             jo-bo@qq.com
           </a>
         </div>
+      </section>
+
+      {/* Redeem code */}
+      <section>
+        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">兑换码</h3>
+        {quotaUnlocked ? (
+          <div className="rounded-2xl bg-moss/[0.06] p-4 ring-1 ring-moss/10">
+            <p className="text-sm font-medium text-moss">已解锁无限使用</p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setRedeemResult(null);
+              }}
+              placeholder="输入兑换码"
+              className="flex-1 rounded-full bg-black/[0.04] px-4 py-2.5 text-[13px] text-ink ring-1 ring-black/[0.06] placeholder:text-ink/25 focus:outline-none focus:ring-2 focus:ring-moss/30"
+            />
+            <button
+              type="button"
+              onClick={handleRedeem}
+              disabled={!code.trim()}
+              className="rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-paper transition active:scale-[0.97] disabled:opacity-30"
+            >
+              兑换
+            </button>
+          </div>
+        )}
+        {redeemResult === "ok" && (
+          <p className="mt-2 text-xs text-moss">兑换成功</p>
+        )}
+        {redeemResult === "fail" && (
+          <p className="mt-2 text-xs text-coral">兑换码无效</p>
+        )}
       </section>
 
       {/* About */}

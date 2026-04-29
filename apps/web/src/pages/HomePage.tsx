@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BookOpen, BriefcaseBusiness, Mail, Square } from "lucide-react";
 import {
   type RecoveryMode,
@@ -60,6 +61,7 @@ export const HomePage = () => {
   } = useRecovery();
 
   const quotaExceeded = useUsageStore((s) => s.isQuotaExceeded());
+  const redeemCode = useUsageStore((s) => s.redeemCode);
   const modeInfo = MODE_LABELS[mode];
   const ModeIcon = modeInfo.icon;
 
@@ -123,19 +125,7 @@ export const HomePage = () => {
           <div className="flex flex-1 flex-col items-center justify-center gap-6">
             {quotaExceeded ? (
               /* Quota exceeded — block message */
-              <div className="text-center">
-                <h1 className="text-xl font-bold text-ink">试用额度已用完</h1>
-                <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
-                  如需继续使用，请联系作者获取更多时间
-                </p>
-                <a
-                  href="mailto:jo-bo@qq.com"
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
-                >
-                  <Mail className="h-4 w-4" />
-                  jo-bo@qq.com
-                </a>
-              </div>
+              <QuotaBlock onRedeem={redeemCode} />
             ) : (
               /* Normal idle state */
               <>
@@ -183,5 +173,59 @@ export const HomePage = () => {
         onClose={dismissCard}
       />
     </>
+  );
+};
+
+const QuotaBlock = ({ onRedeem }: { onRedeem: (code: string) => boolean }) => {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onRedeem(code.trim())) {
+      setCode("");
+      setError(false);
+    } else {
+      setError(true);
+      setCode("");
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <h1 className="text-xl font-bold text-ink">试用额度已用完</h1>
+      <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
+        如需继续使用，请联系作者获取更多时间
+      </p>
+      <a
+        href="mailto:jo-bo@qq.com"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
+      >
+        <Mail className="h-4 w-4" />
+        jo-bo@qq.com
+      </a>
+      <form
+        onSubmit={handleSubmit}
+        className="mt-5 flex items-center justify-center gap-2"
+      >
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value);
+            setError(false);
+          }}
+          placeholder="兑换码"
+          className="w-32 rounded-full bg-black/[0.04] px-3.5 py-2 text-center text-[13px] text-ink ring-1 ring-black/[0.06] placeholder:text-ink/25 focus:outline-none focus:ring-2 focus:ring-moss/30"
+        />
+        <button
+          type="submit"
+          className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-paper transition active:scale-[0.97]"
+        >
+          兑换
+        </button>
+      </form>
+      {error && <p className="mt-2 text-xs text-coral">兑换码无效</p>}
+    </div>
   );
 };
