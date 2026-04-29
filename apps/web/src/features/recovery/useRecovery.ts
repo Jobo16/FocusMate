@@ -9,7 +9,6 @@ export const useRecovery = () => {
   const {
     mode,
     windowSeconds,
-    transcript,
     card,
     recovering,
     transcriptOpen,
@@ -34,7 +33,11 @@ export const useRecovery = () => {
     if (!sessionId) return;
     setRecovering(true);
     try {
-      const response = await requestRecoveryCard(sessionId, windowSeconds, mode);
+      const response = await requestRecoveryCard(
+        sessionId,
+        windowSeconds,
+        mode,
+      );
       setCard(response.card);
 
       // Record marker
@@ -55,16 +58,36 @@ export const useRecovery = () => {
     } finally {
       setRecovering(false);
     }
-  }, [sessionId, windowSeconds, mode, setRecovering, setCard, addRecoveryMarker, addHistoryEntry]);
+  }, [
+    sessionId,
+    windowSeconds,
+    mode,
+    setRecovering,
+    setCard,
+    addRecoveryMarker,
+    addHistoryEntry,
+  ]);
 
   const ask = useCallback(
     async (question: string) => {
       if (!sessionId || !question.trim()) return;
-      addAskMessage({ role: "user", content: question.trim(), timestamp: Date.now() });
+      addAskMessage({
+        role: "user",
+        content: question.trim(),
+        timestamp: Date.now(),
+      });
       setAsking(true);
       try {
-        const response = await requestAsk(sessionId, question.trim(), windowSeconds);
-        addAskMessage({ role: "assistant", content: response.answer, timestamp: Date.now() });
+        const response = await requestAsk(
+          sessionId,
+          question.trim(),
+          windowSeconds,
+        );
+        addAskMessage({
+          role: "assistant",
+          content: response.answer,
+          timestamp: Date.now(),
+        });
       } catch {
         addAskMessage({
           role: "assistant",
@@ -75,7 +98,7 @@ export const useRecovery = () => {
         setAsking(false);
       }
     },
-    [sessionId, windowSeconds, addAskMessage, setAsking]
+    [sessionId, windowSeconds, addAskMessage, setAsking],
   );
 
   const dismissCard = useCallback(() => {
@@ -86,16 +109,13 @@ export const useRecovery = () => {
   return {
     mode,
     windowSeconds,
-    transcript,
     card,
     recovering,
-    transcriptOpen,
     recoveryMarkers,
     askMessages,
     asking,
     setMode,
     setWindowSeconds,
-    setTranscriptOpen,
     recover,
     ask,
     dismissCard,

@@ -1,95 +1,102 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import type { RecoveryMarker } from "../../stores/recoveryStore";
 
 type RecordingTimelineProps = {
   startedAt: number;
   markers: RecoveryMarker[];
-  bufferSeconds: number;
 };
 
-const BUFFER_MAX_SECONDS = 300; // 5 minutes max buffer
+const BAR_COUNT = 60;
+const BUFFER_MAX_SECONDS = 300;
 
-export const RecordingTimeline = ({
-  startedAt,
-  markers,
-  bufferSeconds,
-}: RecordingTimelineProps) => {
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const elapsed = Date.now() - startedAt;
-  const elapsedSeconds = Math.floor(elapsed / 1000);
-  const bufferPercent = Math.min(
-    (bufferSeconds / BUFFER_MAX_SECONDS) * 100,
-    100,
-  );
-
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${String(sec).padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      {/* Timeline bar */}
-      <div className="relative h-8 w-full">
-        {/* Background track */}
-        <div className="absolute inset-x-0 top-3 h-2 rounded-full bg-black/[0.05]" />
-
-        {/* Buffer progress — lighter green */}
-        <div
-          className="absolute top-3 left-0 h-2 rounded-full bg-moss/25 transition-all duration-1000 ease-linear"
-          style={{ width: `${Math.min(bufferPercent, 100)}%` }}
-        />
-
-        {/* Elapsed progress — solid green */}
-        <div
-          className="absolute top-3 left-0 h-2 rounded-full bg-gradient-to-r from-moss/60 to-moss transition-all duration-1000 ease-linear"
-          style={{
-            width: `${Math.min((elapsedSeconds / BUFFER_MAX_SECONDS) * 100, 100)}%`,
-          }}
-        />
-
-        {/* Recovery markers */}
-        {markers.map((marker) => {
-          const markerElapsed = (marker.timestamp - startedAt) / 1000;
-          const markerPercent = Math.min(
-            (markerElapsed / BUFFER_MAX_SECONDS) * 100,
-            100,
-          );
-          return (
-            <div
-              key={marker.id}
-              className="absolute top-0 flex flex-col items-center"
-              style={{
-                left: `${markerPercent}%`,
-                transform: "translateX(-50%)",
-              }}
-              title={`恢复于 ${formatTime(Math.floor(markerElapsed))}`}
-            >
-              {/* Marker diamond */}
-              <div className="h-4 w-4 rotate-45 rounded-[3px] bg-coral shadow-sm ring-2 ring-paper" />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Labels */}
-      <div className="flex items-center justify-between px-0.5 text-[10px] font-medium text-ink/30">
-        <span>{formatTime(elapsedSeconds)}</span>
-        {markers.length > 0 && (
-          <span className="flex items-center gap-1 text-coral/60">
-            <span className="inline-block h-2 w-2 rotate-45 rounded-[1px] bg-coral/50" />
-            <span>已恢复 {markers.length} 次</span>
-          </span>
-        )}
-        <span>缓冲 {formatTime(bufferSeconds)}</span>
-      </div>
-    </div>
-  );
+const randomAmp = () => {
+  const base = 0.15 + Math.random() * 0.25;
+  return Math.random() > 0.82 ? base + 0.3 + Math.random() * 0.25 : base;
 };
+
+export const RecordingTimeline = memo(
+  ({ startedAt, markers }: RecordingTimelineProps) => {
+    const [amplitudes, setAmplitudes] = useState<number[]>(() =>
+      Array.from({ length: 8 }, randomAmp),
+    );
+
+    useEffect(() => {
+      const id = window.setInterval(() => {
+        setAmplitudes((prev) => {
+          const next = [...prev, randomAmp()];
+          return next.slice(-BAR_COUNT);
+        });
+      }, 1000);
+      return () => clearInterval(id);
+    }, []);
+
+    const now = Date.now();
+
+    const formatTime = (s: number) => {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${String(sec).padStart(2, "0")}`;
+    };
+
+    // Map markers to bar indices
+    const markerBarSet = new Set<number>();
+    for (const marker of markers) {
+      const ageSeconds = Math.floor((now - marker.timestamp) / 1000);
+      const barIndex = amplitudes.length - 1 - ageSeconds;
+      if (barIndex >= 0 && barIndex < amplitudes.length) {
+        markerBarSet.add(barIndex);
+      }
+    }
+
+    return (
+      <div className="flex flex-col gap-2">
+        {/* Waveform — scaleY for GPU-accelerated animation */}
+        <div className="relative h-10 w-full overflow-hidden rounded-xl bg-black/[0.03] px-1">
+          <div className="flex h-full items-end gap-[3px]">
+            {amplitudes.map((amp, i) => {
+              const isMarker = markerBarSet.has(i);
+              const isLatest = i === amplitudes.length - 1;
+
+              return (
+                <div
+                  key={i}
+                  className="h-full flex-1 origin-bottom will-change-transform"
+                  style={{
+                    transform: `scaleY(${Math.max(amp, 0.08)})`,
+                    backgroundColor: isMarker
+                      ? "#d86444"
+                      : isLatest
+                        ? "#4d6659"
+                        : "rgba(77, 102, 89, 0.25)",
+                    borderRadius: "2px 2px 0 0",
+                    boxShadow: isMarker
+                      ? "0 0 6px rgba(216,100,68,0.3)"
+                      : "none",
+                    transition: "transform 300ms ease-out",
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Cursor at right edge */}
+          <div className="absolute inset-y-0 right-1 flex items-center">
+            <div className="h-6 w-0.5 rounded-full bg-moss shadow-[0_0_6px_rgba(77,102,89,0.5)]" />
+          </div>
+        </div>
+
+        {/* Labels */}
+        <div className="flex items-center justify-between px-1 text-[10px] font-medium text-ink/25">
+          <span>0:00</span>
+          {markers.length > 0 && (
+            <span className="flex items-center gap-1 text-coral/50">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-coral/50" />
+              <span>恢复 {markers.length} 次</span>
+            </span>
+          )}
+          <span>{formatTime(Math.floor((now - startedAt) / 1000))}</span>
+        </div>
+      </div>
+    );
+  },
+);

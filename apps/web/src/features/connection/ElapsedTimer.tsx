@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type ElapsedTimerProps = {
   startedAt: number | null;
@@ -16,37 +16,33 @@ const formatElapsed = (ms: number): string => {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
+// Uses direct DOM updates via ref — zero re-renders
 export const ElapsedTimer = ({ startedAt }: ElapsedTimerProps) => {
-  const [elapsed, setElapsed] = useState(0);
-  const intervalRef = useRef<number | null>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (!startedAt) {
-      setElapsed(0);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
+    if (!startedAt || !ref.current) return;
 
-    const update = () => setElapsed(Date.now() - startedAt);
-    update();
-    intervalRef.current = window.setInterval(update, 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    const update = () => {
+      if (ref.current) {
+        ref.current.textContent = formatElapsed(Date.now() - startedAt);
       }
     };
+
+    update();
+    const id = window.setInterval(update, 1000);
+    return () => clearInterval(id);
   }, [startedAt]);
 
   if (!startedAt) return null;
 
   return (
-    <span className="tabular-nums text-ink/50 text-sm font-medium" aria-label={`已录音 ${formatElapsed(elapsed)}`}>
-      {formatElapsed(elapsed)}
+    <span
+      ref={ref}
+      className="tabular-nums text-ink/50 text-sm font-medium"
+      aria-label="录音计时"
+    >
+      {formatElapsed(0)}
     </span>
   );
 };

@@ -1,4 +1,4 @@
-import { BookOpen, BriefcaseBusiness, Mic, Square } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, Square } from "lucide-react";
 import {
   type RecoveryMode,
   type RecoveryWindowSeconds,
@@ -24,11 +24,18 @@ const MODE_OPTIONS = [
   },
 ];
 
+const MODE_LABELS: Record<
+  RecoveryMode,
+  { label: string; icon: typeof BookOpen }
+> = {
+  classroom: { label: "课堂", icon: BookOpen },
+  meeting: { label: "会议", icon: BriefcaseBusiness },
+};
+
 export const HomePage = () => {
   const {
     connectionState,
     statusMessage,
-    secondsAvailable,
     startedAt,
     listening,
     startListening,
@@ -39,7 +46,6 @@ export const HomePage = () => {
   const {
     mode,
     windowSeconds,
-    transcript,
     card,
     recovering,
     recoveryMarkers,
@@ -52,16 +58,36 @@ export const HomePage = () => {
     dismissCard,
   } = useRecovery();
 
+  const modeInfo = MODE_LABELS[mode];
+  const ModeIcon = modeInfo.icon;
+
   return (
     <>
-      {/* Mode selector — always visible at top, compact */}
+      {/* Top bar: mode selector OR active mode + stop */}
       <div className="flex items-center justify-center py-2">
-        <SegmentedControl
-          value={mode}
-          options={MODE_OPTIONS}
-          disabled={listening}
-          onChange={setMode}
-        />
+        {listening ? (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-semibold text-paper shadow-sm">
+              <ModeIcon className="h-3.5 w-3.5" />
+              <span>{modeInfo.label}</span>
+            </div>
+            <button
+              type="button"
+              onClick={stopListening}
+              className="flex items-center gap-1.5 rounded-full bg-coral/10 px-4 py-2 text-xs font-semibold text-coral transition active:scale-[0.97]"
+            >
+              <Square className="h-3 w-3" />
+              <span>停止</span>
+            </button>
+          </div>
+        ) : (
+          <SegmentedControl
+            value={mode}
+            options={MODE_OPTIONS}
+            disabled={false}
+            onChange={setMode}
+          />
+        )}
       </div>
 
       {/* Main content area */}
@@ -73,16 +99,9 @@ export const HomePage = () => {
               connectionState={connectionState}
               statusMessage={statusMessage}
               startedAt={startedAt}
-              secondsAvailable={secondsAvailable}
-              transcript={transcript}
-              mode={mode}
               recoveryMarkers={recoveryMarkers}
             />
-
-            {/* Spacer */}
             <div className="flex-1" />
-
-            {/* Recovery button + window */}
             <div className="flex flex-col items-center gap-5 pb-4">
               <RecoveryButton
                 disabled={!sessionId}
@@ -97,53 +116,36 @@ export const HomePage = () => {
           </div>
         )}
 
-        {/* Idle state */}
+        {/* Idle state — clean text + button only */}
         {!listening && connectionState === "idle" && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-8">
-            {/* Hero visual */}
-            <div className="relative">
-              <div className="grid h-28 w-28 place-items-center rounded-full bg-gradient-to-b from-ink to-ink/80 shadow-[0_20px_60px_rgba(23,23,23,0.25)]">
-                <Mic className="h-12 w-12 text-paper/80" />
-              </div>
-              <div className="absolute -inset-3 rounded-full border border-ink/5" />
-            </div>
-
+          <div className="flex flex-1 flex-col items-center justify-center gap-6">
             <div className="text-center">
               <h1 className="text-xl font-bold text-ink">开始听讲</h1>
               <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
                 错过内容时，一键找回课堂重点
               </p>
             </div>
-
-            {/* Start button */}
             <button
               type="button"
               onClick={() => startListening(mode)}
-              className="flex items-center gap-2.5 rounded-full bg-moss px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-moss/25 transition active:scale-[0.97]"
+              className="rounded-full bg-moss px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-moss/25 transition active:scale-[0.97]"
             >
-              <Mic className="h-4 w-4" />
-              <span>{mode === "meeting" ? "开始听会" : "开始听课"}</span>
+              {mode === "meeting" ? "开始听会" : "开始听课"}
             </button>
           </div>
         )}
 
-        {/* Stopped state */}
+        {/* Stopped state — clean text + button only */}
         {!listening && connectionState !== "idle" && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6">
-            <div className="grid h-16 w-16 place-items-center rounded-full bg-ink/5">
-              <Square className="h-6 w-6 text-ink/30" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-ink/60">{statusMessage}</p>
-              <button
-                type="button"
-                onClick={() => startListening(mode)}
-                className="mt-4 flex items-center gap-2 rounded-full bg-ink/5 px-5 py-2.5 text-sm font-medium text-ink/60 transition hover:bg-ink/10 active:scale-[0.97]"
-              >
-                <Mic className="h-4 w-4" />
-                重新开始
-              </button>
-            </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+            <p className="text-sm font-medium text-ink/60">{statusMessage}</p>
+            <button
+              type="button"
+              onClick={() => startListening(mode)}
+              className="rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
+            >
+              重新开始
+            </button>
           </div>
         )}
       </div>
