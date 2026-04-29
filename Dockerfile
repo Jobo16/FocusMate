@@ -5,6 +5,8 @@ FROM ${NODE_IMAGE} AS build
 WORKDIR /app
 
 ENV CI=true
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
 RUN corepack enable
 
@@ -29,8 +31,21 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=8787
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
-COPY --from=build /app /app
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/server/package.json apps/server/package.json
+COPY packages/shared/package.json packages/shared/package.json
+COPY packages/prompts/package.json packages/prompts/package.json
+
+RUN pnpm install --prod --frozen-lockfile --filter @focusmate/server...
+
+COPY --from=build /app/apps/server/dist apps/server/dist
+COPY --from=build /app/packages/shared/dist packages/shared/dist
+COPY packages/prompts packages/prompts
 
 WORKDIR /app/apps/server
 
