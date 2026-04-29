@@ -1,4 +1,7 @@
-import { RECOVERY_WINDOWS, type RecoveryWindowSeconds } from "@focusmate/shared";
+import {
+  RECOVERY_WINDOWS,
+  type RecoveryWindowSeconds,
+} from "@focusmate/shared";
 
 type WindowSelectorProps = {
   value: RecoveryWindowSeconds;
@@ -6,20 +9,22 @@ type WindowSelectorProps = {
 };
 
 const LABELS: Record<RecoveryWindowSeconds, string> = {
-  30: "30 秒",
-  60: "60 秒",
-  180: "3 分钟"
+  30: "30s",
+  60: "60s",
+  180: "3min",
 };
 
 export const WindowSelector = ({ value, onChange }: WindowSelectorProps) => (
-  <div className="mx-auto grid w-full max-w-xs grid-cols-3 rounded-full bg-white/75 p-1 shadow-sm ring-1 ring-black/10">
+  <div className="inline-flex items-center gap-0.5 rounded-full bg-black/[0.04] p-0.5">
     {RECOVERY_WINDOWS.map((windowSeconds) => (
       <button
         key={windowSeconds}
         type="button"
         onClick={() => onChange(windowSeconds)}
-        className={`rounded-full px-3 py-2.5 text-sm font-semibold transition ${
-          value === windowSeconds ? "bg-ink text-paper shadow-sm" : "text-ink/60"
+        className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition active:scale-[0.97] ${
+          value === windowSeconds
+            ? "bg-ink text-paper shadow-sm"
+            : "text-ink/35 hover:text-ink/50"
         }`}
       >
         {LABELS[windowSeconds]}

@@ -6,7 +6,7 @@ export const TranscriptSegmentSchema = z.object({
   isFinal: z.boolean(),
   startAt: z.number(),
   endAt: z.number(),
-  source: z.enum(["dashscope", "mock", "manual"]).default("dashscope")
+  source: z.enum(["dashscope", "mock", "manual"]).default("dashscope"),
 });
 
 export const RecoveryModeSchema = z.enum(["classroom", "meeting"]);
@@ -20,57 +20,59 @@ export const RecoveryCardSchema = z.object({
   resumePoint: z.string(),
   keyPoints: z.array(z.string()).default([]),
   confidence: z.enum(["high", "medium", "low"]).default("medium"),
-  transcript: z.string()
+  transcript: z.string(),
 });
 
 export const RecoverRequestSchema = z.object({
   sessionId: z.string().min(1),
   mode: RecoveryModeSchema.default("classroom"),
-  windowSeconds: z.union([z.literal(30), z.literal(60), z.literal(180)]).default(60)
+  windowSeconds: z
+    .union([z.literal(30), z.literal(60), z.literal(180)])
+    .default(60),
 });
 
 export const RecoverResponseSchema = z.object({
   card: RecoveryCardSchema,
   generatedAt: z.number(),
   model: z.string(),
-  usedFallback: z.boolean()
+  usedFallback: z.boolean(),
 });
 
 export const ClientWsMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("config"),
-    sampleRate: z.number().positive()
+    sampleRate: z.number().positive(),
   }),
   z.object({
-    type: z.literal("start")
+    type: z.literal("start"),
   }),
   z.object({
-    type: z.literal("stop")
-  })
+    type: z.literal("stop"),
+  }),
 ]);
 
 export const ServerWsMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("session"),
-    sessionId: z.string()
+    sessionId: z.string(),
   }),
   z.object({
     type: z.literal("status"),
-    message: z.string()
+    message: z.string(),
   }),
   z.object({
     type: z.literal("transcript"),
-    segment: TranscriptSegmentSchema
+    segment: TranscriptSegmentSchema,
   }),
   z.object({
     type: z.literal("buffer"),
     secondsAvailable: z.number(),
-    segmentCount: z.number()
+    segmentCount: z.number(),
   }),
   z.object({
     type: z.literal("error"),
-    message: z.string()
-  })
+    message: z.string(),
+  }),
 ]);
 
 export type TranscriptSegment = z.infer<typeof TranscriptSegmentSchema>;
@@ -84,4 +86,25 @@ export type ServerWsMessage = z.infer<typeof ServerWsMessageSchema>;
 export const RECOVERY_WINDOWS = [30, 60, 180] as const;
 export type RecoveryWindowSeconds = (typeof RECOVERY_WINDOWS)[number];
 
-export const RECOVERY_MODES = ["classroom", "meeting"] as const satisfies readonly RecoveryMode[];
+export const RECOVERY_MODES = [
+  "classroom",
+  "meeting",
+] as const satisfies readonly RecoveryMode[];
+
+export const AskRequestSchema = z.object({
+  sessionId: z.string().min(1),
+  question: z.string().min(1).max(500),
+  windowSeconds: z
+    .union([z.literal(30), z.literal(60), z.literal(180)])
+    .optional(),
+});
+
+export const AskResponseSchema = z.object({
+  answer: z.string(),
+  question: z.string(),
+  generatedAt: z.number(),
+  model: z.string(),
+});
+
+export type AskRequest = z.infer<typeof AskRequestSchema>;
+export type AskResponse = z.infer<typeof AskResponseSchema>;
