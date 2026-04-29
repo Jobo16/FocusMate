@@ -1,4 +1,4 @@
-import { BookOpen, BriefcaseBusiness } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, Mail } from "lucide-react";
 import {
   RECOVERY_WINDOWS,
   type RecoveryMode,
@@ -64,6 +64,21 @@ export const SettingsPage = () => {
               {WINDOW_LABELS[window]}
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* Feedback */}
+      <section>
+        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">提点意见</h3>
+        <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-black/[0.04]">
+          <p className="text-sm text-ink/50">欢迎反馈使用体验和改进建议</p>
+          <a
+            href="mailto:jo-bo@qq.com"
+            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-moss"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            jo-bo@qq.com
+          </a>
         </div>
       </section>
 

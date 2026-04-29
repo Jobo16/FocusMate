@@ -1,8 +1,9 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { RecoveryMode } from "@focusmate/shared";
 import { startAudioClient, type AudioClient } from "../../audio/audioClient";
 import { useConnectionStore } from "../../stores/connectionStore";
 import { useRecoveryStore } from "../../stores/recoveryStore";
+import { useUsageStore } from "../../stores/usageStore";
 import {
   connectTranscriptSocket,
   type TranscriptSocket,
@@ -31,8 +32,18 @@ export const useConnection = () => {
 
   const listening = connectionState === "listening";
 
+  // Track usage while listening — silent, no re-renders
+  useEffect(() => {
+    if (!listening) return;
+    const id = window.setInterval(() => {
+      useUsageStore.getState().addListeningSeconds(1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [listening]);
+
   const startListening = useCallback(
     async (mode: RecoveryMode) => {
+      if (useUsageStore.getState().isQuotaExceeded()) return;
       setConnectionState("connecting");
       setStatusMessage("正在请求麦克风");
       resetTranscript();

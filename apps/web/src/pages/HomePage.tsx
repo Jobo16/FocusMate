@@ -1,4 +1,4 @@
-import { BookOpen, BriefcaseBusiness, Square } from "lucide-react";
+import { BookOpen, BriefcaseBusiness, Mail, Square } from "lucide-react";
 import {
   type RecoveryMode,
   type RecoveryWindowSeconds,
@@ -10,6 +10,7 @@ import { RecoveryButton } from "../features/recovery/RecoveryButton";
 import { RecoverySheet } from "../features/recovery/RecoverySheet";
 import { WindowSelector } from "../features/recovery/WindowSelector";
 import { useRecovery } from "../features/recovery/useRecovery";
+import { useUsageStore } from "../stores/usageStore";
 
 const MODE_OPTIONS = [
   {
@@ -58,6 +59,7 @@ export const HomePage = () => {
     dismissCard,
   } = useRecovery();
 
+  const quotaExceeded = useUsageStore((s) => s.isQuotaExceeded());
   const modeInfo = MODE_LABELS[mode];
   const ModeIcon = modeInfo.icon;
 
@@ -116,36 +118,58 @@ export const HomePage = () => {
           </div>
         )}
 
-        {/* Idle state — clean text + button only */}
+        {/* Idle state */}
         {!listening && connectionState === "idle" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-6">
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-ink">开始听讲</h1>
-              <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
-                错过内容时，一键找回课堂重点
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => startListening(mode)}
-              className="rounded-full bg-moss px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-moss/25 transition active:scale-[0.97]"
-            >
-              {mode === "meeting" ? "开始听会" : "开始听课"}
-            </button>
+            {quotaExceeded ? (
+              /* Quota exceeded — block message */
+              <div className="text-center">
+                <h1 className="text-xl font-bold text-ink">试用额度已用完</h1>
+                <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
+                  如需继续使用，请联系作者获取更多时间
+                </p>
+                <a
+                  href="mailto:jo-bo@qq.com"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
+                >
+                  <Mail className="h-4 w-4" />
+                  jo-bo@qq.com
+                </a>
+              </div>
+            ) : (
+              /* Normal idle state */
+              <>
+                <div className="text-center">
+                  <h1 className="text-xl font-bold text-ink">开始听讲</h1>
+                  <p className="mt-2 max-w-[260px] text-sm leading-relaxed text-ink/45">
+                    错过内容时，一键找回课堂重点
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => startListening(mode)}
+                  className="rounded-full bg-moss px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-moss/25 transition active:scale-[0.97]"
+                >
+                  {mode === "meeting" ? "开始听会" : "开始听课"}
+                </button>
+              </>
+            )}
           </div>
         )}
 
-        {/* Stopped state — clean text + button only */}
+        {/* Stopped state */}
         {!listening && connectionState !== "idle" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-4">
             <p className="text-sm font-medium text-ink/60">{statusMessage}</p>
-            <button
-              type="button"
-              onClick={() => startListening(mode)}
-              className="rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
-            >
-              重新开始
-            </button>
+            {!quotaExceeded && (
+              <button
+                type="button"
+                onClick={() => startListening(mode)}
+                className="rounded-full bg-moss/10 px-5 py-2.5 text-sm font-medium text-moss transition active:scale-[0.97]"
+              >
+                重新开始
+              </button>
+            )}
           </div>
         )}
       </div>
