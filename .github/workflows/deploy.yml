@@ -13,66 +13,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      IMAGE: ccr.ccs.tencentyun.com/jo-bo/focusmate
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build web
-        run: |
-          pnpm --filter @focusmate/shared build
-          pnpm --filter @focusmate/web build
-
-      - name: Login Tencent TCR
-        uses: docker/login-action@v3
-        with:
-          registry: ccr.ccs.tencentyun.com
-          username: ${{ secrets.TCR_USERNAME }}
-          password: ${{ secrets.TCR_PASSWORD }}
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push server image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          build-args: |
-            NODE_IMAGE=docker.m.daocloud.io/library/node:22-alpine
-          tags: |
-            ${{ env.IMAGE }}:${{ github.sha }}
-            ${{ env.IMAGE }}:prod
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Upload web assets
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: 115.159.47.86
-          username: ubuntu
-          key: ${{ secrets.FOCUSMATE_DEPLOY_SSH_KEY }}
-          source: apps/web/dist/*
-          target: /tmp/focusmate-v2-web
-          strip_components: 3
-          rm: true
-
       - name: Deploy to voice.jobo.asia
         uses: appleboy/ssh-action@v1.2.0
         with:
