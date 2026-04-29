@@ -1,12 +1,13 @@
 # Data Flow
 
-FocusMate v2 has four main runtime chains.
+FocusMate v2 has five main runtime chains.
 
 ## 1. Realtime Audio Chain
 
 ```text
 User taps "开始听课"
-  -> App.tsx
+  -> HomePage.tsx
+  -> useConnection.ts
   -> audioClient.ts
   -> browser getUserMedia
   -> pcm-worklet.js
@@ -18,7 +19,8 @@ The browser captures microphone audio, chunks it in an `AudioWorklet`, converts 
 
 Key files:
 
-- `apps/web/src/App.tsx`
+- `apps/web/src/pages/HomePage.tsx`
+- `apps/web/src/features/connection/useConnection.ts`
 - `apps/web/src/audio/audioClient.ts`
 - `apps/web/public/pcm-worklet.js`
 - `apps/web/src/ws/transcriptSocket.ts`
@@ -68,7 +70,7 @@ Current rules:
 - final transcript segments are stored
 - partial transcript is kept as current partial
 - max buffer horizon is 5 minutes
-- no transcript persistence yet
+- no transcript persistence on server
 
 Key files:
 
@@ -78,7 +80,8 @@ Key files:
 ## 4. Recovery Card Chain
 
 ```text
-User taps "我刚刚错过了什么？"
+User taps recovery button
+  -> useRecovery.ts
   -> recoverClient.ts
   -> POST /api/recover
   -> recover.ts
@@ -93,15 +96,45 @@ If LLM env vars exist, `modelClient.ts` calls an OpenAI-compatible chat completi
 
 If no LLM key exists or the LLM call fails, the server returns a local fallback card. This keeps the app usable during development.
 
+The returned card is also saved to localStorage history and a recovery marker is recorded on the waveform timeline.
+
 Key files:
 
-- `apps/web/src/recovery/recoverClient.ts`
+- `apps/web/src/features/recovery/useRecovery.ts`
+- `apps/web/src/features/recovery/recoverClient.ts`
 - `apps/server/src/routes/recover.ts`
 - `apps/server/src/recovery/modelClient.ts`
 - `apps/server/src/recovery/fallback.ts`
 - `packages/prompts/recovery-card-classroom.md`
 - `packages/prompts/recovery-card-meeting.md`
-- `apps/web/src/recovery/RecoverySheet.tsx`
+- `apps/web/src/features/recovery/RecoverySheet.tsx`
+
+## 5. Q&A Chain
+
+```text
+User types question in AskInput
+  -> useRecovery.ts
+  -> askClient.ts
+  -> POST /api/ask
+  -> ask.ts
+  -> TranscriptBuffer.getRecent(full buffer)
+  -> qaClient.ts
+  -> transcript-qa.md prompt
+  -> answer text
+  -> AskInput message list
+```
+
+Single-turn Q&A: the user asks a question, the system answers based on the full transcript buffer. No conversation history is sent to the LLM.
+
+If no LLM key exists, the server returns a message indicating Q&A is unavailable.
+
+Key files:
+
+- `apps/web/src/features/recovery/AskInput.tsx`
+- `apps/web/src/features/recovery/askClient.ts`
+- `apps/server/src/routes/ask.ts`
+- `apps/server/src/recovery/qaClient.ts`
+- `packages/prompts/transcript-qa.md`
 
 ## Shared Contract Chain
 
@@ -121,8 +154,22 @@ Core shared types:
 - `RecoveryCard`
 - `RecoverRequest`
 - `RecoverResponse`
+- `AskRequest`
+- `AskResponse`
 - `ClientWsMessage`
 - `ServerWsMessage`
+
+## Client-Side Persistence
+
+Three stores persist to localStorage via Zustand middleware:
+
+```text
+focusmate-history    Recovery card history (max 50 entries)
+focusmate-settings   Default mode and window preferences
+focusmate-usage      Cumulative listening seconds + quota unlock flag
+```
+
+No server-side persistence exists. Clearing browser data resets all history, settings, and usage quota.
 
 ## End-to-End Summary
 
@@ -137,5 +184,6 @@ Microphone audio
   -> selected mode: classroom or meeting
   -> recent transcript window
   -> LLM or fallback recovery card
-  -> mobile bottom sheet
+  -> bottom sheet with Q&A
+  -> saved to localStorage history
 ```

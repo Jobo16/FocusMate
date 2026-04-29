@@ -8,6 +8,7 @@ The first version is a manual live context recovery tool:
 - Server reads the recent transcript buffer
 - Server returns a Chinese recovery card in a few seconds
 - Transcript remains an expandable evidence layer
+- User can ask follow-up questions based on the transcript
 
 It currently supports two modes:
 
@@ -23,18 +24,22 @@ apps/web
   Browser microphone
   AudioWorklet PCM chunks
   Mobile recovery-card UI
+  Inline Q&A
+  History + Settings
 
 apps/server
   WebSocket audio endpoint
   DashScope ASR relay or mock ASR
   Rolling transcript buffer
   Recovery-card API
+  Q&A API
 
 packages/shared
   Zod schemas and TypeScript types
 
 packages/prompts
-  Mode-specific LLM prompt text
+  Mode-specific recovery-card prompts
+  Transcript Q&A prompt
 ```
 
 ## Runtime Flow
@@ -55,21 +60,27 @@ DashScope realtime ASR
         v
 Rolling Transcript Buffer
         |
-        | POST /api/recover
-        v
-Recovery Card Generator
+        +-- POST /api/recover --> Recovery Card Generator
+        |
+        +-- POST /api/ask ------> Q&A Generator
 ```
 
 ## Module Boundaries
 
 - `packages/shared`: Zod schemas and shared TypeScript types.
-- `packages/prompts`: mode-specific prompt text for card generation.
+- `packages/prompts`: mode-specific prompt text for card generation and Q&A.
 - `apps/server/src/buffer`: rolling transcript buffer.
 - `apps/server/src/asr`: DashScope relay and mock transcript source.
-- `apps/server/src/recovery`: model adapter and fallback recovery.
+- `apps/server/src/recovery`: model adapter, fallback recovery, and Q&A client.
+- `apps/server/src/routes`: HTTP route handlers.
 - `apps/web/src/audio`: browser microphone capture.
 - `apps/web/src/ws`: transcript WebSocket client.
-- `apps/web/src/recovery`: mobile recovery card UI.
+- `apps/web/src/features/connection`: connection management, status display, waveform timeline.
+- `apps/web/src/features/recovery`: recovery card, Q&A, API clients.
+- `apps/web/src/stores`: Zustand state management.
+- `apps/web/src/pages`: page-level components (Home, History, Settings).
+- `apps/web/src/app`: app shell, layout, routing.
+- `apps/web/src/components`: reusable UI primitives.
 
 ## Server Modules
 
@@ -83,34 +94,58 @@ Recovery Card Generator
 | `src/buffer/sessionStore.ts` | In-memory WebSocket session registry |
 | `src/buffer/transcriptBuffer.ts` | Recent transcript window, max 5 minutes |
 | `src/routes/recover.ts` | `POST /api/recover` |
+| `src/routes/ask.ts` | `POST /api/ask` |
 | `src/recovery/modelClient.ts` | OpenAI-compatible LLM call and fallback handling |
+| `src/recovery/qaClient.ts` | Transcript-based Q&A via LLM |
 | `src/recovery/fallback.ts` | Local heuristic recovery card |
 
 ## Web Modules
 
 | Module | Responsibility |
 | --- | --- |
-| `src/App.tsx` | Main mobile UI flow |
+| `src/app/App.tsx` | Page router |
+| `src/app/Layout.tsx` | Global layout with bottom navigation |
+| `src/pages/HomePage.tsx` | Main listening + recovery page |
+| `src/pages/HistoryPage.tsx` | Recovery card history list |
+| `src/pages/SettingsPage.tsx` | Default mode/window, redeem code, feedback |
+| `src/features/connection/useConnection.ts` | WebSocket + audio management hook |
+| `src/features/connection/ListeningStatus.tsx` | Status indicator, transcript card |
+| `src/features/connection/RecordingTimeline.tsx` | Waveform visualization |
+| `src/features/connection/ElapsedTimer.tsx` | Recording duration timer |
+| `src/features/recovery/useRecovery.ts` | Recovery + Q&A management hook |
+| `src/features/recovery/recoverClient.ts` | Recovery API client |
+| `src/features/recovery/askClient.ts` | Q&A API client |
+| `src/features/recovery/RecoveryButton.tsx` | Main manual trigger |
+| `src/features/recovery/RecoverySheet.tsx` | Bottom-sheet recovery card + Q&A |
+| `src/features/recovery/WindowSelector.tsx` | Recovery window picker |
+| `src/features/recovery/AskInput.tsx` | Q&A input and message list |
+| `src/stores/connectionStore.ts` | WebSocket connection state |
+| `src/stores/recoveryStore.ts` | Transcript, card, markers, Q&A messages |
+| `src/stores/settingsStore.ts` | Persisted user preferences |
+| `src/stores/routerStore.ts` | Page navigation state |
+| `src/stores/usageStore.ts` | Usage quota and redeem code |
+| `src/components/Sheet.tsx` | Reusable bottom sheet |
+| `src/components/SegmentedControl.tsx` | Mode toggle |
+| `src/components/PulseIndicator.tsx` | Status dot |
 | `src/audio/audioClient.ts` | Browser microphone and AudioWorklet setup |
 | `src/ws/transcriptSocket.ts` | Browser WebSocket client |
-| `src/recovery/recoverClient.ts` | Recovery API client |
-| `src/recovery/useFocusMateStore.ts` | UI/session state |
-| `src/recovery/RecoveryButton.tsx` | Main manual trigger |
-| `src/recovery/RecoverySheet.tsx` | Bottom-sheet recovery card |
-| `src/recovery/ModeSelector.tsx` | Classroom/meeting mode switch |
 
 ## State Model
 
-The MVP keeps state intentionally simple:
+Server state is intentionally simple:
 
 - Session state lives in memory on the server.
 - A session is created for each WebSocket connection.
-- Transcript buffer is not persisted.
-- Recovery cards are not persisted.
+- Transcript buffer is not persisted server-side.
 - No account system exists.
-- Mode is selected on the client and sent with each recovery request.
 
-This is correct for the validation phase. Add persistence only after real classroom use proves the recovery card is worth saving.
+Client state is persisted in localStorage via Zustand:
+
+- `focusmate-history`: recovery card history (max 50 entries)
+- `focusmate-settings`: default mode and window preferences
+- `focusmate-usage`: cumulative listening seconds and quota unlock flag
+
+Mode is selected on the client and sent with each recovery/ask request.
 
 ## Latency Principle
 
@@ -130,6 +165,6 @@ Mode-specific behavior lives in:
 - `packages/prompts/recovery-card-classroom.md`
 - `packages/prompts/recovery-card-meeting.md`
 - `apps/server/src/recovery/prompt.ts`
-- `apps/web/src/recovery/RecoverySheet.tsx`
+- `apps/web/src/features/recovery/RecoverySheet.tsx`
 
 Do not add a generic "all scenarios" mode yet. Add a concrete mode only when its recovery card has a distinct job and testable success criteria.

@@ -19,6 +19,12 @@ It is not a generic transcript page, note-taking app, chatbot, meeting-minutes b
   - `现在要做什么`
   - `你现在该接着听`
   - expandable original transcript
+- Inline Q&A: ask follow-up questions based on the transcript.
+- Waveform timeline showing recording activity and recovery markers.
+- Recovery history saved to browser localStorage.
+- Settings page for default mode and window preferences.
+- Usage quota: 100 minutes per browser, with redeem code unlock.
+- Feedback entry with author email contact.
 - Realtime audio capture through browser microphone.
 - DashScope realtime ASR support, with mock transcript fallback.
 - OpenAI-compatible LLM recovery-card generation, with local fallback.
@@ -31,12 +37,12 @@ It is not a generic transcript page, note-taking app, chatbot, meeting-minutes b
 | Workspace | pnpm workspaces |
 | Web | Vite + React + TypeScript |
 | UI | Tailwind CSS + mobile-first custom components |
-| State | Zustand |
+| State | Zustand (5 stores) + localStorage persistence |
 | Server | Node.js + Fastify + WebSocket |
 | ASR | DashScope realtime recognition |
 | LLM | OpenAI-compatible chat completions endpoint |
 | Contracts | Zod schemas in `packages/shared` |
-| Prompt | Markdown prompt in `packages/prompts` |
+| Prompt | Markdown prompts in `packages/prompts` |
 
 ## Repository Layout
 
@@ -46,7 +52,7 @@ apps/
   server/     Fastify API, WebSocket, ASR relay, recovery generation
 packages/
   shared/     Zod schemas and shared TypeScript types
-  prompts/    Mode-specific recovery-card prompts
+  prompts/    Mode-specific recovery-card and Q&A prompts
 docs/
   architecture.md
   getting-started.md
@@ -54,6 +60,23 @@ docs/
   api.md
   development.md
   office-hours/
+```
+
+## Web App Structure
+
+```text
+apps/web/src/
+  app/            App shell and layout
+  pages/          Home, History, Settings
+  features/
+    connection/   Audio capture, WebSocket, status display
+    recovery/     Recovery card, Q&A, API clients
+  stores/         Zustand stores (connection, recovery, settings, router, usage)
+  components/     Reusable UI (Sheet, SegmentedControl, PulseIndicator)
+  audio/          Browser microphone + AudioWorklet
+  ws/             WebSocket client
+  styles/         Global CSS
+  utils/          UUID helper
 ```
 
 ## Quick Start
@@ -73,6 +96,7 @@ Without API keys, the app still runs:
 
 - transcript source falls back to mock classroom text
 - recovery-card generation falls back to local rules
+- Q&A feature requires LLM key to function
 
 ## Environment
 

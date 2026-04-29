@@ -71,6 +71,40 @@ Error cases:
 - `400 invalid_recover_request`
 - `404 session_not_found`
 
+### `POST /api/ask`
+
+Ask a question based on the transcript buffer.
+
+Request:
+
+```json
+{
+  "sessionId": "websocket-session-id",
+  "question": "老师刚才说的定义是什么？",
+  "windowSeconds": 180
+}
+```
+
+`windowSeconds` is optional. If omitted, the full buffer (up to 5 minutes) is used.
+
+Response:
+
+```json
+{
+  "answer": "老师刚才说的定义是...",
+  "question": "老师刚才说的定义是什么？",
+  "generatedAt": 1777216476841,
+  "model": "gpt-4o-mini"
+}
+```
+
+Error cases:
+
+- `400 invalid_ask_request`
+- `404 session_not_found`
+
+When no LLM key is configured, the server returns a message indicating Q&A is unavailable.
+
 ## WebSocket
 
 Endpoint:
@@ -170,7 +204,7 @@ Error:
 | `PORT` | No | Server port, default `8787` |
 | `HOST` | No | Server host, default `0.0.0.0` |
 | `DASHSCOPE_API_KEY` | No | Enables real DashScope ASR |
-| `LLM_API_KEY` | No | Enables model-generated cards |
+| `LLM_API_KEY` | No | Enables model-generated cards and Q&A |
 | `OPENAI_API_KEY` | No | Alternative key name for model generation |
 | `LLM_BASE_URL` | No | OpenAI-compatible base URL |
 | `OPENAI_BASE_URL` | No | Alternative base URL name |
@@ -179,5 +213,5 @@ Error:
 Fallback behavior:
 
 - no `DASHSCOPE_API_KEY`: mock transcript mode
-- no LLM key: local recovery fallback
-- failed LLM request: local recovery fallback
+- no LLM key: local recovery fallback, Q&A returns unavailable message
+- failed LLM request: local recovery fallback, Q&A returns error message

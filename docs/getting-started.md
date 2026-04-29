@@ -51,9 +51,9 @@ DASHSCOPE_API_KEY=your_dashscope_key
 
 If omitted, the server uses mock classroom transcript lines from `apps/server/src/asr/mockTranscript.ts`.
 
-### LLM Recovery Cards
+### LLM Recovery Cards and Q&A
 
-Set these for model-generated recovery cards:
+Set these for model-generated recovery cards and Q&A:
 
 ```bash
 LLM_API_KEY=your_key
@@ -63,7 +63,10 @@ LLM_MODEL=gpt-4o-mini
 
 Any OpenAI-compatible chat completions endpoint should work if it supports JSON object responses.
 
-If omitted, the server uses the local fallback in `apps/server/src/recovery/fallback.ts`.
+If omitted:
+
+- Recovery cards use the local fallback in `apps/server/src/recovery/fallback.ts`.
+- Q&A returns a message indicating it requires LLM configuration.
 
 ## Mobile Testing
 
@@ -90,11 +93,23 @@ pnpm test
 curl -fsS http://localhost:8787/health
 ```
 
-Smoke test behavior without keys:
+## Smoke Test Without Keys
 
-1. Start `pnpm dev`.
+1. Run `pnpm dev`.
 2. Open `http://localhost:5173`.
-3. Click `开始听课`.
-4. Wait for mock transcript buffer to fill.
-5. Click `我刚刚错过了什么？`.
-6. Confirm a recovery card appears.
+3. Select a mode (课堂 or 会议).
+4. Click `开始听课`.
+5. Wait for mock transcript buffer to fill.
+6. Click the recovery button (dark circle at the bottom).
+7. Confirm a recovery card appears in the bottom sheet.
+8. Try typing a question in the Q&A input.
+
+## Client-Side Data
+
+All user data is stored in the browser's localStorage:
+
+- **History** (`focusmate-history`): past recovery cards, max 50 entries.
+- **Settings** (`focusmate-settings`): default mode and window preferences.
+- **Usage** (`focusmate-usage`): cumulative listening time and quota unlock flag.
+
+Clearing browser data resets all of these. There is no server-side persistence.

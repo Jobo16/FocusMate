@@ -14,7 +14,8 @@ Allowed:
 - improve ASR reliability
 - improve transcript buffering
 - improve recovery-card prompt and schema
-- add tests around buffer, schema, recovery generation, and UI flow
+- improve inline Q&A experience
+- improve usage quota UX
 
 Avoid for now:
 
@@ -24,13 +25,47 @@ Avoid for now:
 - account system
 - saved course history
 - automatic interruption prompts
-- chat interface
-- database persistence
+- chat interface with conversation history
+- server-side database persistence
 - meeting integrations
 
 The current question is still:
 
 > When the user taps "我刚刚错过了什么？", can FocusMate return a useful recovery card within 3-8 seconds?
+
+## Project Structure
+
+```text
+apps/web/src/
+  app/            App.tsx (router), Layout.tsx (shell + bottom nav)
+  pages/          HomePage, HistoryPage, SettingsPage
+  features/
+    connection/   useConnection hook, ListeningStatus, RecordingTimeline, ElapsedTimer
+    recovery/     useRecovery hook, RecoveryButton, RecoverySheet, AskInput, API clients
+  stores/         connectionStore, recoveryStore, settingsStore, routerStore, usageStore
+  components/     Sheet, SegmentedControl, PulseIndicator
+  audio/          audioClient (getUserMedia + AudioWorklet)
+  ws/             transcriptSocket (WebSocket client)
+  styles/         global.css
+  utils/          uuid.ts
+
+apps/server/src/
+  index.ts        Fastify bootstrap
+  routes/         recover.ts, ask.ts
+  recovery/       modelClient.ts, qaClient.ts, fallback.ts, prompt.ts
+  buffer/         sessionStore.ts, transcriptBuffer.ts
+  asr/            dashscope.ts, mockTranscript.ts, resampler.ts
+  ws/             transcriptSocket.ts
+  config/         env.ts
+
+packages/shared/src/
+  index.ts        All Zod schemas and TypeScript types
+
+packages/prompts/
+  recovery-card-classroom.md
+  recovery-card-meeting.md
+  transcript-qa.md
+```
 
 ## Change Order
 
@@ -47,11 +82,22 @@ When changing recovery quality:
 2. Update `apps/server/src/recovery/modelClient.ts` only if the model contract changes.
 3. Update `apps/server/src/recovery/fallback.ts` if local dev behavior should match.
 
+When changing Q&A quality:
+
+1. Start with `packages/prompts/transcript-qa.md`.
+2. Update `apps/server/src/recovery/qaClient.ts` only if the model contract changes.
+
 When changing transcript handling:
 
 1. Update `apps/server/src/buffer/transcriptBuffer.ts`.
-2. Add or update tests before touching UI.
-3. Keep max buffer and recovery windows explicit.
+2. Keep max buffer and recovery windows explicit.
+
+When changing UI:
+
+1. Components live in `apps/web/src/components/` (reusable) or `apps/web/src/features/` (domain-specific).
+2. Pages live in `apps/web/src/pages/`.
+3. Stores live in `apps/web/src/stores/`. Use `zustand/persist` for data that should survive page reload.
+4. Run `pnpm typecheck` after changes.
 
 ## Commands
 
@@ -70,18 +116,9 @@ pnpm test
 - Keep prompt text in `packages/prompts`.
 - Keep modes explicit. Current modes are `classroom` and `meeting`.
 - Keep route handlers thin.
-- Keep the browser UI focused on listening state, recovery trigger, and recovery sheet.
+- Use Zustand selectors to minimize re-renders.
+- Use `React.memo` on components that receive stable props.
 - Do not put API keys or secrets in source files.
-
-## Testing Priorities
-
-Current test suite is not yet populated. The first useful tests should cover:
-
-1. `TranscriptBuffer.getRecent()` window behavior.
-2. fallback recovery-card extraction of questions/tasks/deadlines.
-3. `RecoverRequestSchema` and `RecoverResponseSchema`.
-4. Web UI rendering for disabled/enabled recovery button.
-5. API route behavior for missing session and empty transcript.
 
 ## Manual Smoke Test
 
@@ -91,9 +128,9 @@ Without API keys:
 2. Open `http://localhost:5173`.
 3. Click `开始听课`.
 4. Wait for mock transcript.
-5. Click `我刚刚错过了什么？`.
+5. Click the recovery button (dark circle).
 6. Confirm a bottom-sheet recovery card appears.
-7. Expand `原文逐字稿`.
+7. Try asking a question in the Q&A input.
 
 With real ASR:
 
@@ -101,7 +138,7 @@ With real ASR:
 2. Restart `pnpm dev`.
 3. Open the app on a secure origin if testing on mobile.
 4. Speak near the microphone.
-5. Confirm transcript buffer seconds increase.
+5. Confirm transcript appears in the card area.
 6. Trigger a recovery card.
 
 With real LLM:
@@ -110,6 +147,7 @@ With real LLM:
 2. Restart `pnpm dev`.
 3. Trigger a card.
 4. Confirm `usedFallback` is false in the network response.
+5. Try the Q&A feature.
 
 ## Git Hygiene
 
