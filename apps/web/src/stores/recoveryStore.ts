@@ -5,7 +5,7 @@ import type {
   RecoveryMode,
   RecoveryWindowSeconds,
   TranscriptSegment,
-} from "@focusmate/shared";
+} from "@daymark/shared";
 
 export type HistoryEntry = {
   id: string;

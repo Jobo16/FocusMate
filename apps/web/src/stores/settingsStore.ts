@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { RecoveryMode, RecoveryWindowSeconds } from "@focusmate/shared";
+import type { RecoveryMode, RecoveryWindowSeconds } from "@daymark/shared";
 
 type SettingsStore = {
   defaultMode: RecoveryMode;

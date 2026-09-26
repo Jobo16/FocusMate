@@ -21,8 +21,8 @@ RUN pnpm install --frozen-lockfile
 COPY apps apps
 COPY packages packages
 
-RUN pnpm --filter @focusmate/shared build \
-  && pnpm --filter @focusmate/server build
+RUN pnpm --filter @daymark/shared build \
+  && pnpm --filter @daymark/server build
 
 FROM ${NODE_IMAGE} AS runner
 
@@ -41,7 +41,7 @@ COPY apps/server/package.json apps/server/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/prompts/package.json packages/prompts/package.json
 
-RUN pnpm install --prod --frozen-lockfile --filter @focusmate/server...
+RUN pnpm install --prod --frozen-lockfile --filter @daymark/server...
 
 COPY --from=build /app/apps/server/dist apps/server/dist
 COPY --from=build /app/packages/shared/dist packages/shared/dist

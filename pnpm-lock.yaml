@@ -23,7 +23,7 @@ importers:
       '@fastify/websocket':
         specifier: ^11.2.0
         version: 11.2.0
-      '@focusmate/shared':
+      '@daymark/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       dotenv:
@@ -54,7 +54,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@focusmate/shared':
+      '@daymark/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@vitejs/plugin-react':

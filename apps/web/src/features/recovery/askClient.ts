@@ -1,4 +1,4 @@
-import { AskResponseSchema, type AskResponse, type RecoveryWindowSeconds } from "@focusmate/shared";
+import { AskResponseSchema, type AskResponse, type RecoveryWindowSeconds } from "@daymark/shared";
 
 export const requestAsk = async (
   sessionId: string,

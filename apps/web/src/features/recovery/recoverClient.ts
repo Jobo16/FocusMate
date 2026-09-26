@@ -1,4 +1,4 @@
-import { RecoverResponseSchema, type RecoverResponse, type RecoveryMode, type RecoveryWindowSeconds } from "@focusmate/shared";
+import { RecoverResponseSchema, type RecoverResponse, type RecoveryMode, type RecoveryWindowSeconds } from "@daymark/shared";
 
 export const requestRecoveryCard = async (
   sessionId: string,

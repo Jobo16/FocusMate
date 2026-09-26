@@ -1,13 +1,13 @@
 {
-  "name": "focusmate-v2",
+  "name": "daymark",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "packageManager": "pnpm@10.30.3",
   "scripts": {
-    "dev": "pnpm --filter @focusmate/shared build && concurrently -n server,web -c blue,green \"pnpm --filter @focusmate/server dev\" \"pnpm --filter @focusmate/web dev --host 0.0.0.0\"",
+    "dev": "pnpm --filter @daymark/shared build && concurrently -n server,web -c blue,green \"pnpm --filter @daymark/server dev\" \"pnpm --filter @daymark/web dev --host 0.0.0.0\"",
     "build": "pnpm -r build",
-    "typecheck": "pnpm --filter @focusmate/shared build && pnpm -r --filter '!@focusmate/shared' typecheck",
+    "typecheck": "pnpm --filter @daymark/shared build && pnpm -r --filter '!@daymark/shared' typecheck",
     "test": "pnpm -r test",
     "clean": "rm -rf apps/*/dist packages/*/dist node_modules"
   },

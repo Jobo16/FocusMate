@@ -1,4 +1,4 @@
-import { ServerWsMessageSchema, type ClientWsMessage, type ServerWsMessage } from "@focusmate/shared";
+import { ServerWsMessageSchema, type ClientWsMessage, type ServerWsMessage } from "@daymark/shared";
 
 export type TranscriptSocket = {
   send: (message: ClientWsMessage) => void;

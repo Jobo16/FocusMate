@@ -1,7 +1,7 @@
 import {
   RECOVERY_WINDOWS,
   type RecoveryWindowSeconds,
-} from "@focusmate/shared";
+} from "@daymark/shared";
 
 type WindowSelectorProps = {
   value: RecoveryWindowSeconds;

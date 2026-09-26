@@ -1,4 +1,4 @@
-import { RecoveryCardSchema, type RecoveryCard, type RecoveryMode, type TranscriptSegment } from "@focusmate/shared";
+import { RecoveryCardSchema, type RecoveryCard, type RecoveryMode, type TranscriptSegment } from "@daymark/shared";
 import { z } from "zod";
 import { buildFallbackRecoveryCard } from "./fallback.js";
 import { loadRecoveryPrompt } from "./prompt.js";

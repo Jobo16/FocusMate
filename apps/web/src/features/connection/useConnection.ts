@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import type { RecoveryMode } from "@focusmate/shared";
+import type { RecoveryMode } from "@daymark/shared";
 import { startAudioClient, type AudioClient } from "../../audio/audioClient";
 import { useConnectionStore } from "../../stores/connectionStore";
 import { useRecoveryStore } from "../../stores/recoveryStore";

@@ -4,7 +4,7 @@ import {
   RECOVERY_WINDOWS,
   type RecoveryMode,
   type RecoveryWindowSeconds,
-} from "@focusmate/shared";
+} from "@daymark/shared";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useUsageStore } from "../stores/usageStore";
@@ -140,7 +140,7 @@ export const SettingsPage = () => {
       <section>
         <h3 className="mb-2 text-[13px] font-semibold text-ink/60">关于</h3>
         <div className="rounded-2xl bg-white/60 p-4 text-sm ring-1 ring-black/[0.04]">
-          <p className="font-semibold text-ink">FocusMate v2</p>
+          <p className="font-semibold text-ink">Daymark</p>
           <p className="mt-1 text-ink/50">课堂/会议实时上下文恢复工具</p>
           <p className="mt-2 text-xs text-ink/25">错过内容时，一键找回。</p>
         </div>

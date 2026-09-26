@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { ClientWsMessageSchema, type ServerWsMessage } from "@focusmate/shared";
+import { ClientWsMessageSchema, type ServerWsMessage } from "@daymark/shared";
 import type { RawData } from "ws";
 import { DashScopeRelay, TARGET_SAMPLE_RATE } from "../asr/dashscope.js";
 import { startMockTranscript } from "../asr/mockTranscript.js";

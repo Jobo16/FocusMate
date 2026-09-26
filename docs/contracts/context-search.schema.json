@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "FocusMate context.search target contract",
+  "title": "Daymark context.search target contract",
   "description": "Design only; runtime API is not implemented. Validate against $defs/search_request or $defs/search_response. Semantic authorization and time ordering require implementation validation.",
   "$defs": {
     "time_range": {

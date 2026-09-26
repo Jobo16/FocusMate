@@ -1,4 +1,4 @@
-import type { RecoveryCard, RecoveryMode, TranscriptSegment } from "@focusmate/shared";
+import type { RecoveryCard, RecoveryMode, TranscriptSegment } from "@daymark/shared";
 
 const ACTION_PATTERNS = [
   /请大家[^。！？]*/g,

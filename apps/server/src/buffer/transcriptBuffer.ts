@@ -1,4 +1,4 @@
-import type { TranscriptSegment } from "@focusmate/shared";
+import type { TranscriptSegment } from "@daymark/shared";
 
 const MAX_BUFFER_MS = 5 * 60 * 1000;
 

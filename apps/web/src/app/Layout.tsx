@@ -20,7 +20,7 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Top bar */}
       <header className="flex items-center justify-between px-5 pt-[max(14px,env(safe-area-inset-top))] pb-2">
         <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-moss/60">
-          FocusMate
+          Daymark
         </div>
         {page === "home" && <StatusDot />}
       </header>

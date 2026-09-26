@@ -1,5 +1,5 @@
 {
-  "name": "@focusmate/web",
+  "name": "@daymark/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -11,7 +11,7 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "@focusmate/shared": "workspace:*",
+    "@daymark/shared": "workspace:*",
     "@vitejs/plugin-react": "^5.1.1",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",

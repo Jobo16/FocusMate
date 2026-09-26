@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { AskRequestSchema, AskResponseSchema } from "@focusmate/shared";
+import { AskRequestSchema, AskResponseSchema } from "@daymark/shared";
 import type { SessionStore } from "../buffer/sessionStore.js";
 import { answerFromTranscript } from "../recovery/qaClient.js";
 

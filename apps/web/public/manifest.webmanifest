@@ -1,6 +1,6 @@
 {
-  "name": "FocusMate",
-  "short_name": "FocusMate",
+  "name": "Daymark",
+  "short_name": "Daymark",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f7f5ef",

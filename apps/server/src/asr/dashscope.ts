@@ -55,7 +55,7 @@ export class DashScopeRelay {
     this.ws = new WebSocket(DASH_SCOPE_URL, {
       headers: {
         Authorization: `Bearer ${this.options.apiKey}`,
-        "user-agent": "focusmate-v2"
+        "user-agent": "daymark-v0.1.0"
       }
     });
 

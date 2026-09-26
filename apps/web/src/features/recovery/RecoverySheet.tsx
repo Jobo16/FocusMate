@@ -1,4 +1,4 @@
-import type { RecoveryCard } from "@focusmate/shared";
+import type { RecoveryCard } from "@daymark/shared";
 import { Check, Copy, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { Sheet } from "../../components/Sheet";

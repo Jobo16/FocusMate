@@ -3,7 +3,7 @@ import { BookOpen, BriefcaseBusiness, Mail, Square } from "lucide-react";
 import {
   type RecoveryMode,
   type RecoveryWindowSeconds,
-} from "@focusmate/shared";
+} from "@daymark/shared";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { ListeningStatus } from "../features/connection/ListeningStatus";
 import { useConnection } from "../features/connection/useConnection";

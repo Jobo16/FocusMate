@@ -20,7 +20,7 @@ await app.register(websocket);
 
 app.get("/health", async () => ({
   ok: true,
-  service: "focusmate-server",
+  service: "daymark-server",
   now: Date.now(),
 }));
 

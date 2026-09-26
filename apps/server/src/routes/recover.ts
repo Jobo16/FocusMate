@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { RecoverRequestSchema, RecoverResponseSchema } from "@focusmate/shared";
+import { RecoverRequestSchema, RecoverResponseSchema } from "@daymark/shared";
 import type { SessionStore } from "../buffer/sessionStore.js";
 import { generateRecoveryCard } from "../recovery/modelClient.js";
 

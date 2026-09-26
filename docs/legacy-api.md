@@ -17,7 +17,7 @@ Response:
 ```json
 {
   "ok": true,
-  "service": "focusmate-server",
+  "service": "daymark-server",
   "now": 1777216476841
 }
 ```
