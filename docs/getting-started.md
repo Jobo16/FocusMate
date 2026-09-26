@@ -1,115 +1,63 @@
-# Getting Started
+# 当前原型启动与重构入口
 
-This guide covers local setup for FocusMate v2.
+**本页描述当前已经存在的 Web 原型。** 新上下文服务的接口、数据库和三端客户端仍按 [路线图](roadmap.md) 分阶段实现，不能用本文启动命令推断目标功能已经可用。
 
-## Requirements
+## 环境与启动
 
-- Node.js 20 or newer
-- pnpm 10
-- A browser that supports `getUserMedia` and `AudioWorklet`
+项目使用 pnpm 10；可采用 Dockerfile 同系列的 Node.js 22，并以锁文件和依赖实际要求为准。
 
-Current local versions used during setup:
+在仓库根目录运行：
 
 ```bash
-node -v
-pnpm -v
-```
-
-## Install
-
-```bash
-cd /Users/jobo/projects/FocusMate/foucesmate-v2
 pnpm install
 cp .env.example .env
-```
-
-## Run
-
-```bash
 pnpm dev
 ```
 
-Open:
+若已经有自己的 `.env`，保留已有配置，不重复覆盖。
 
-- Web app: `http://localhost:5173`
-- API health: `http://localhost:8787/health`
+- 页面：`http://localhost:5173`
+- 健康检查：`http://localhost:8787/health`
 
-The dev command first builds `@focusmate/shared`, then starts:
+`pnpm dev` 会先构建共享包，再启动 Fastify 服务端和 Vite 前端。
 
-- `@focusmate/server` on port `8787`
-- `@focusmate/web` on port `5173`
+## 当前环境变量
 
-## API Keys
-
-### DashScope ASR
-
-Set this for real speech-to-text:
-
-```bash
-DASHSCOPE_API_KEY=your_dashscope_key
-```
-
-If omitted, the server uses mock classroom transcript lines from `apps/server/src/asr/mockTranscript.ts`.
-
-### LLM Recovery Cards and Q&A
-
-Set these for model-generated recovery cards and Q&A:
-
-```bash
-LLM_API_KEY=your_key
+```dotenv
+PORT=8787
+HOST=0.0.0.0
+DASHSCOPE_API_KEY=
+LLM_API_KEY=
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
 ```
 
-Any OpenAI-compatible chat completions endpoint should work if it supports JSON object responses.
+这些变量来自当前 `.env.example`；本次没有新增可运行的本地知识库或云端同步配置。
 
-If omitted:
+| 配置 | 当前行为 |
+| --- | --- |
+| 没有 DashScope Key | 使用预置课堂文字作为 mock 转写 |
+| 有 DashScope Key | 尝试连接真实 ASR |
+| 没有 LLM Key | 恢复卡使用规则兜底，追问提示不可用 |
+| 有 LLM Key | 尝试模型生成；模型接口需满足当前调用格式 |
+| 恢复模型失败 | 返回兜底卡片，响应带 `usedFallback` |
 
-- Recovery cards use the local fallback in `apps/server/src/recovery/fallback.ts`.
-- Q&A returns a message indicating it requires LLM configuration.
+API Key 的缺失和麦克风权限失败是不同条件。后者不保证会正确切换为 mock；源代码的状态一致性问题见 [实现现状](current-state.md)。
 
-## Mobile Testing
+## 手机访问当前 Web 原型
 
-For a first UI pass, open the LAN URL printed by Vite:
+浏览器麦克风要求安全上下文。电脑上的 localhost 与手机访问局域网 HTTP 地址不是同一情况，真实手机录音应使用符合浏览器要求的 HTTPS 环境。
 
-```text
-http://<your-lan-ip>:5173
-```
+页面切后台、锁屏、音频中断和系统回收需要实机验证；当前原型没有全天后台录音保证。平台依据见 [平台能力](platforms.md)。
 
-For real microphone testing on a phone, prefer HTTPS. Many mobile browsers restrict microphone APIs on non-secure origins. Localhost works on the development machine, but a phone on LAN usually needs a secure context.
+## 当前数据与部署边界
 
-Recommended next step for real classroom testing:
+历史、偏好和额度保存在浏览器 localStorage。服务端转写保存在内存；重启或连接生命周期变化会丢失相应会话。原型没有完整录音归档、跨设备同步或账户资料隔离。
 
-- add local HTTPS with `mkcert`
-- run the Vite dev server over HTTPS
-- open the HTTPS LAN URL on the phone
+现有 Dockerfile 只构建和运行服务端及其依赖，不会提供已经打包好的完整网页站点。当前 GitHub Actions 调用原作者服务器上的外部部署脚本；不要将该工作流原样当作新环境的通用部署方案。
 
-## Verification Commands
+## 开始重构
 
-```bash
-pnpm typecheck
-pnpm build
-pnpm test
-curl -fsS http://localhost:8787/health
-```
+按 [产品方向](product-direction.md)、[架构](architecture.md)、[重构规范](refactoring.md) 和 [AGENTS.md](../AGENTS.md)执行。旧接口说明保留于 [legacy-api.md](legacy-api.md)。
 
-## Smoke Test Without Keys
-
-1. Run `pnpm dev`.
-2. Open `http://localhost:5173`.
-3. Select a mode (课堂 or 会议).
-4. Click `开始听课`.
-5. Wait for mock transcript buffer to fill.
-6. Click the recovery button (dark circle at the bottom).
-7. Confirm a recovery card appears in the bottom sheet.
-8. Try typing a question in the Q&A input.
-
-## Client-Side Data
-
-All user data is stored in the browser's localStorage:
-
-- **History** (`focusmate-history`): past recovery cards, max 50 entries.
-- **Settings** (`focusmate-settings`): default mode and window preferences.
-- **Usage** (`focusmate-usage`): cumulative listening time and quota unlock flag.
-
-Clearing browser data resets all of these. There is no server-side persistence.
+先在开发环境构建契约、持久化和可靠采集链，再接外部 Agent 验证资料检索。新增能力通过实际实现和验证后，更新 [能力状态表](current-state.md)。

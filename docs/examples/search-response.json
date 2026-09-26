@@ -1,0 +1,57 @@
+{
+  "request_id": "request_example",
+  "generated_at": "2026-09-26T05:00:00.000Z",
+  "items": [
+    {
+      "hit_id": "hit_example",
+      "event_id": "event_example",
+      "record_ids": [
+        "record_example"
+      ],
+      "evidence_ids": [
+        "evidence_example"
+      ],
+      "node_id": "node_desktop_example",
+      "origin_node_id": "node_desktop_example",
+      "source_kind": "microphone",
+      "recorded_at": "2026-09-25T07:00:00.000Z",
+      "recorded_end_at": "2026-09-25T07:01:00.000Z",
+      "snippet": "合成示例：先验证重试次数，再决定是否启用退避策略。",
+      "epistemic_type": "extracted",
+      "score": 0.86,
+      "raw_status": "available"
+    }
+  ],
+  "coverage": {
+    "complete": false,
+    "nodes": [
+      {
+        "node_id": "node_desktop_example",
+        "status": "searched",
+        "reason": null,
+        "searched_range": {
+          "start": "2026-09-24T16:00:00.000Z",
+          "end": "2026-09-25T16:00:00.000Z"
+        },
+        "capture_gaps": []
+      },
+      {
+        "node_id": "node_phone_example",
+        "status": "offline",
+        "reason": "手机未连接且资料未同步；本次未查询该节点。",
+        "searched_range": null,
+        "capture_gaps": []
+      }
+    ]
+  },
+  "index_watermark": [
+    {
+      "node_id": "node_desktop_example",
+      "index_version": "keyword_example_v1",
+      "known_indexed_through": "2026-09-25T16:00:00.000Z",
+      "pending_ranges": []
+    }
+  ],
+  "truncated": false,
+  "next_cursor": null
+}

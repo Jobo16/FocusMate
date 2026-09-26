@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FocusMate context.search target contract",
+  "description": "Design only; runtime API is not implemented. Validate against $defs/search_request or $defs/search_response. Semantic authorization and time ordering require implementation validation.",
+  "$defs": {
+    "time_range": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "search_request": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "time_range": {
+          "$ref": "#/$defs/time_range"
+        },
+        "node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "minItems": 1,
+          "maxItems": 20
+        },
+        "source_kinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "microphone",
+              "system_audio",
+              "screen",
+              "share",
+              "import"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 5
+        },
+        "include_derived": {
+          "type": "boolean",
+          "default": false
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "default": 10
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 256,
+          "maximum": 16000,
+          "default": 4000
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
+    },
+    "search_response": {
+      "type": "object",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "hit_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "event_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "record_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "minItems": 1
+              },
+              "evidence_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "minItems": 1
+              },
+              "node_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "origin_node_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "source_kind": {
+                "enum": [
+                  "microphone",
+                  "system_audio",
+                  "screen",
+                  "share",
+                  "import"
+                ]
+              },
+              "recorded_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "recorded_end_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "snippet": {
+                "type": "string"
+              },
+              "epistemic_type": {
+                "enum": [
+                  "observed",
+                  "extracted",
+                  "inferred"
+                ]
+              },
+              "score": {
+                "type": "number"
+              },
+              "raw_status": {
+                "enum": [
+                  "pending",
+                  "available",
+                  "missing",
+                  "expired",
+                  "deleted"
+                ]
+              }
+            },
+            "required": [
+              "hit_id",
+              "event_id",
+              "record_ids",
+              "evidence_ids",
+              "node_id",
+              "origin_node_id",
+              "source_kind",
+              "recorded_at",
+              "recorded_end_at",
+              "snippet",
+              "epistemic_type",
+              "score",
+              "raw_status"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 50
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "index_watermark": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/index_watermark"
+          },
+          "minItems": 0
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "request_id",
+        "generated_at",
+        "items",
+        "coverage",
+        "index_watermark",
+        "truncated",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "complete": {
+          "type": "boolean"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "node_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "status": {
+                "enum": [
+                  "searched",
+                  "partial",
+                  "offline",
+                  "unsynced"
+                ]
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "searched_range": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/time_range"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "capture_gaps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "time_range": {
+                      "$ref": "#/$defs/time_range"
+                    },
+                    "source_kind": {
+                      "enum": [
+                        "microphone",
+                        "system_audio",
+                        "screen",
+                        "share",
+                        "import"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "time_range",
+                    "source_kind",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "node_id",
+              "status",
+              "reason",
+              "searched_range",
+              "capture_gaps"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "complete",
+        "nodes"
+      ],
+      "additionalProperties": false
+    },
+    "index_watermark": {
+      "type": "object",
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "index_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "known_indexed_through": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pending_ranges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/time_range"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "node_id",
+        "index_version",
+        "known_indexed_through",
+        "pending_ranges"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$comment": "Synthetic contract, 2026-09-26"
+}

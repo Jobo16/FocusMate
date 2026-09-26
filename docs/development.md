@@ -1,169 +1,62 @@
-# Development Guide
+# 开发指南
 
-This guide is for humans and AI agents editing FocusMate v2.
+**状态：目标重构规范；当前可运行能力以 [current-state.md](current-state.md) 为准。**
 
-## Product Rules
+## 先确定变更属于哪一层
 
-Keep the MVP narrow.
+1. 新数据源进入采集适配器，不进入 Agent 业务代码。
+2. 转写、OCR、去重与事件组织进入整理管线。
+3. 存储实现通过 repository／storage 接口隔离。
+4. 搜索与上下文补全进入检索服务。
+5. 卡片、问答、总结等进入消费端，通过公共检索接口读取。
+6. 原生录音和屏幕资源由持续存活的服务管理，不能依赖某个页面是否挂载。
 
-Allowed:
+模块依赖、目标目录和接口分别见 [架构](architecture.md)、[数据模型](data-model.md)、[API](api.md)。迁移文件顺序见 [重构规范](refactoring.md)。
 
-- improve manual recovery-card flow
-- improve mode-specific classroom/meeting recovery
-- improve mobile classroom UI
-- improve ASR reliability
-- improve transcript buffering
-- improve recovery-card prompt and schema
-- improve inline Q&A experience
-- improve usage quota UX
+## 现有规范的替代
 
-Avoid for now:
+旧指南禁止服务端持久化、账户和历史记录的条款已失效。现在允许并计划实现：持久化上下文库、独立检索服务、云端身份与权限、原始证据管理、三端采集、设备管理与选择性同步。
 
-- full transcript dashboard
-- full class summary
-- full meeting minutes
-- account system
-- saved course history
-- automatic interruption prompts
-- chat interface with conversation history
-- server-side database persistence
-- meeting integrations
+持续录音和屏幕采集以用户主动开启及平台许可为前提。自动开始下一段采样与自动绕过操作系统授权是不同的行为。界面保留采集来源、状态与停止入口。
 
-The current question is still:
+## 契约优先，逐步实现
 
-> When the user taps "我刚刚错过了什么？", can FocusMate return a useful recovery card within 3-8 seconds?
+- 旧 `/api/recover`、`/api/ask`、`/ws` 的 camelCase 契约保持兼容，见 [旧协议](legacy-api.md)。
+- 新接口位于 `/api/v1`，使用 snake_case。设计阶段由 [API 文档](api.md)、[数据模型](data-model.md) 与 [搜索契约](contracts/context-search.schema.json)表达。
+- 对应实现 PR 必须将已实现契约落实到 `packages/shared`，并同步校验器与示例；目标草案和运行时代码不允许无声漂移。
+- 记录、素材、事件与证据的稳定 ID 不依赖 WebSocket 连接。
+- 新模型结果增加派生版本；更换模型不改写历史原始证据。
+- 模拟输入明确标记并与真实资料隔离；产品界面不得把兜底结果标成真实模型结果。
 
-## Project Structure
+## 默认工程选择
 
-```text
-apps/web/src/
-  app/            App.tsx (router), Layout.tsx (shell + bottom nav)
-  pages/          HomePage, HistoryPage, SettingsPage
-  features/
-    connection/   useConnection hook, ListeningStatus, RecordingTimeline, ElapsedTimer
-    recovery/     useRecovery hook, RecoveryButton, RecoverySheet, AskInput, API clients
-  stores/         connectionStore, recoveryStore, settingsStore, routerStore, usageStore
-  components/     Sheet, SegmentedControl, PulseIndicator
-  audio/          audioClient (getUserMedia + AudioWorklet)
-  ws/             transcriptSocket (WebSocket client)
-  styles/         global.css
-  utils/          uuid.ts
+保留现有 TypeScript／Fastify／React 入口进行增量改造。本地节点目标采用文件素材存储与 SQLite 元数据／全文索引；云端目标采用对象存储与 PostgreSQL。向量索引属于可重建派生数据。中文分词和检索质量以实际语料评估后决定。
 
-apps/server/src/
-  index.ts        Fastify bootstrap
-  routes/         recover.ts, ask.ts
-  recovery/       modelClient.ts, qaClient.ts, fallback.ts, prompt.ts
-  buffer/         sessionStore.ts, transcriptBuffer.ts
-  asr/            dashscope.ts, mockTranscript.ts, resampler.ts
-  ws/             transcriptSocket.ts
-  config/         env.ts
+Python ASR／OCR／索引 worker 可以在有明确模型或依赖收益时独立引入，使用与 TS 一致的数据契约。不要为满足语言偏好一次性替换现有前后端，也不要假设手机必须嵌入完整 Python 服务。
 
-packages/shared/src/
-  index.ts        All Zod schemas and TypeScript types
+## 变更与验证
 
-packages/prompts/
-  recovery-card-classroom.md
-  recovery-card-meeting.md
-  transcript-qa.md
-```
+先写明改动解决什么问题、影响哪个契约、失败时如何恢复，再实现最小闭环。根据风险选择验证：
 
-## Change Order
+| 变更 | 必须关注 |
+| --- | --- |
+| 采集与会话 | 启停、断连、切页、休眠、权限撤回、分片重试 |
+| 持久化与迁移 | 已确认记录重启不丢、幂等、隔离、可回退 |
+| 提取与事件 | 时间边界、重复片段、模型失败、证据定位 |
+| 检索 | 命中正确证据、前后文、旧结论、覆盖缺口 |
+| 权限与删除 | 服务端授权、索引与摘要依赖清除、离线副本状态 |
+| 仅文档 | 链接、示例 JSON、术语、现状与目标一致性 |
 
-When changing request/response shapes:
-
-1. Update `packages/shared/src/index.ts`.
-2. Update server parsing/response code.
-3. Update web client and UI.
-4. Run `pnpm typecheck`.
-
-When changing recovery quality:
-
-1. Start with `packages/prompts/recovery-card-classroom.md` or `packages/prompts/recovery-card-meeting.md`.
-2. Update `apps/server/src/recovery/modelClient.ts` only if the model contract changes.
-3. Update `apps/server/src/recovery/fallback.ts` if local dev behavior should match.
-
-When changing Q&A quality:
-
-1. Start with `packages/prompts/transcript-qa.md`.
-2. Update `apps/server/src/recovery/qaClient.ts` only if the model contract changes.
-
-When changing transcript handling:
-
-1. Update `apps/server/src/buffer/transcriptBuffer.ts`.
-2. Keep max buffer and recovery windows explicit.
-
-When changing UI:
-
-1. Components live in `apps/web/src/components/` (reusable) or `apps/web/src/features/` (domain-specific).
-2. Pages live in `apps/web/src/pages/`.
-3. Stores live in `apps/web/src/stores/`. Use `zustand/persist` for data that should survive page reload.
-4. Run `pnpm typecheck` after changes.
-
-## Commands
+常用现有命令：
 
 ```bash
-pnpm install
-pnpm dev
 pnpm typecheck
 pnpm build
 pnpm test
 ```
 
-## Code Style
+基线 `pnpm test` 使用 `--passWithNoTests`；返回成功不代表存在测试覆盖。文档变更不需要调用真实模型或打开麦克风。新增运行时代码按具体风险补验证，不用重复覆盖格式性低风险变化。
 
-- TypeScript end-to-end.
-- Keep shared contracts in `packages/shared`.
-- Keep prompt text in `packages/prompts`.
-- Keep modes explicit. Current modes are `classroom` and `meeting`.
-- Keep route handlers thin.
-- Use Zustand selectors to minimize re-renders.
-- Use `React.memo` on components that receive stable props.
-- Do not put API keys or secrets in source files.
+## 提交约定
 
-## Manual Smoke Test
-
-Without API keys:
-
-1. Run `pnpm dev`.
-2. Open `http://localhost:5173`.
-3. Click `开始听课`.
-4. Wait for mock transcript.
-5. Click the recovery button (dark circle).
-6. Confirm a bottom-sheet recovery card appears.
-7. Try asking a question in the Q&A input.
-
-With real ASR:
-
-1. Set `DASHSCOPE_API_KEY`.
-2. Restart `pnpm dev`.
-3. Open the app on a secure origin if testing on mobile.
-4. Speak near the microphone.
-5. Confirm transcript appears in the card area.
-6. Trigger a recovery card.
-
-With real LLM:
-
-1. Set `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL`.
-2. Restart `pnpm dev`.
-3. Trigger a card.
-4. Confirm `usedFallback` is false in the network response.
-5. Try the Q&A feature.
-
-## Git Hygiene
-
-Committed files should include:
-
-- source code
-- docs
-- lockfile
-- `.env.example`
-
-Do not commit:
-
-- `.env`
-- `node_modules`
-- `dist`
-- logs
-- local caches
-
-The `.gitignore` is configured for these boundaries.
+PR 描述包含问题、行为变化、兼容／迁移、实际验证和已知限制。项目文档中的验收数值均为目标，未测量前不得改写成效果数据。原始录音、截图、个人数据库、密钥、日志、缓存和导出文件不提交进源码仓库；应用数据目录由独立配置管理。

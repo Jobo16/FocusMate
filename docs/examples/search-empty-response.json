@@ -1,0 +1,30 @@
+{
+  "request_id": "request_empty_example",
+  "generated_at": "2026-09-26T05:00:00.000Z",
+  "items": [],
+  "coverage": {
+    "complete": true,
+    "nodes": [
+      {
+        "node_id": "node_desktop_example",
+        "status": "searched",
+        "reason": null,
+        "searched_range": {
+          "start": "2026-09-24T16:00:00.000Z",
+          "end": "2026-09-25T16:00:00.000Z"
+        },
+        "capture_gaps": []
+      }
+    ]
+  },
+  "index_watermark": [
+    {
+      "node_id": "node_desktop_example",
+      "index_version": "keyword_example_v1",
+      "known_indexed_through": "2026-09-25T16:00:00.000Z",
+      "pending_ranges": []
+    }
+  ],
+  "truncated": false,
+  "next_cursor": null
+}

@@ -1,0 +1,18 @@
+{
+  "query": "接口重试讨论中的方案与后续修改",
+  "time_range": {
+    "start": "2026-09-24T16:00:00.000Z",
+    "end": "2026-09-25T16:00:00.000Z"
+  },
+  "node_ids": [
+    "node_desktop_example",
+    "node_phone_example"
+  ],
+  "source_kinds": [
+    "microphone",
+    "screen"
+  ],
+  "include_derived": false,
+  "limit": 10,
+  "max_tokens": 4000
+}
