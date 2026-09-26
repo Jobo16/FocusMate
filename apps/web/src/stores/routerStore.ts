@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type Page = "home" | "history" | "settings";
+export type Page = "record" | "chat" | "settings";
 
 type RouterStore = {
   page: Page;
@@ -8,6 +8,6 @@ type RouterStore = {
 };
 
 export const useRouterStore = create<RouterStore>((set) => ({
-  page: "home",
+  page: "record",
   navigate: (page) => set({ page }),
 }));

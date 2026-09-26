@@ -1,10 +1,10 @@
 # Daymark：个人上下文采集与检索服务
 
-通过网页、桌面和手机收集用户授权记录的音频、画面与分享内容，将素材整理成带时间、来源和证据的个人上下文库，供独立 Agent 通过工具检索。
+Daymark 的目标是通过网页、桌面和手机收集用户授权记录的音频、画面与分享内容，将素材整理成带时间、来源和证据的个人上下文库，供独立 Agent 通过工具检索。
 
-> **状态：产品方向与重构规范，2026-09-26。** 本次调整的是文档和开发规范。当前运行代码仍是课堂／会议恢复卡 Web 原型；桌面采集、手机原生采集、持久化知识库、跨设备查询和 MCP 接入均属于待实现目标。当前版本与设计目标见 [实现现状](docs/current-state.md)。
+> **状态：网页前端预览，2026-09-26。** 宣传首页和三页工作台已搭建；录音页复用旧 `/ws` 实时连接，仅预览转写，不持久保存音频。AI 历史聊天、可靠采集、桌面与手机原生采集、跨设备检索和 MCP 仍待实现。当前边界见 [实现现状](docs/current-state.md)。
 
-## 核心边界
+## 产品边界
 
 采集器负责获取与可靠保存素材；整理管线负责转写、OCR、去重、事件组织与索引；检索服务提供资料和出处；外部 Agent 负责用户任务、推理与执行。产品不依赖特定 Agent Runtime。
 
@@ -30,6 +30,7 @@
 | [实施路线](docs/roadmap.md) | 分阶段交付、PR 边界与退出条件 |
 | [开发指南](docs/development.md) | 日常开发约定和变更流程 |
 | [当前实现](docs/current-state.md) | 已有代码能力与已观察到的限制 |
+| [网页体验](docs/web-experience.md) | 宣传首页、三页工作台、状态与设计令牌 |
 | [现有原型启动](docs/getting-started.md) | 当前可运行命令与演示边界 |
 | [方向变更记录](docs/decisions/2026-09-26-personal-context.md) | 本次取舍与历史规范的替代关系 |
 
@@ -43,12 +44,12 @@ cp .env.example .env
 pnpm dev
 ```
 
-浏览器入口为 `http://localhost:5173`，健康检查为 `http://localhost:8787/health`。未配置 DashScope 时使用预置转写；未配置 LLM 时恢复卡采用规则兜底。详情见 [启动指南](docs/getting-started.md)。
+本地宣传首页为 `http://localhost:5173/`，三页工作台为 `http://localhost:5173/space`，健康检查为 `http://localhost:8787/health`。未来主域名承载首页，`space.` 子域名承载工作台；DNS、反向代理与正式部署尚未配置。未配置 DashScope 时录音页会明确标记预置转写。详情见 [启动指南](docs/getting-started.md)。
 
 现有技术栈为 React／Vite／TypeScript、Fastify／WebSocket、Zod 与 pnpm workspace。重构优先保留当前 TypeScript 入口，以独立模块和协议逐步替换；Python 处理 worker 是可选后续方案，不是本次已经完成的迁移。
 
 ## 交付状态与许可
 
-本设计基于 [Jobo16/FocusMate 提交 a263a6b](https://github.com/Jobo16/FocusMate/tree/a263a6b165816bccdb3385c31ccf4e98a92d1d20)。本地品牌调整更新了 Daymark 的应用展示名和内部 workspace 包标识，没有改变当前产品能力、环境变量或部署流程；尚未验证真实录音、手机后台采集或模型效果。
+本设计基于 [Jobo16/FocusMate 提交 a263a6b](https://github.com/Jobo16/FocusMate/tree/a263a6b165816bccdb3385c31ccf4e98a92d1d20)。本地前端已改为 Daymark 宣传首页和录音／AI 聊天／设置工作台。服务端旧接口仍在，尚未交付持久录音、历史检索或 Agent 工具调用；也未验证手机后台采集和模型效果。
 
 该基线未发现明确许可证。本设计文档不赋予上游源码额外许可；复用第三方实现时分别核对对应版本的许可条件。

@@ -1,126 +1,139 @@
 import { useCallback, useEffect, useRef } from "react";
-import type { RecoveryMode } from "@daymark/shared";
 import { startAudioClient, type AudioClient } from "../../audio/audioClient";
 import { useConnectionStore } from "../../stores/connectionStore";
-import { useRecoveryStore } from "../../stores/recoveryStore";
-import { useUsageStore } from "../../stores/usageStore";
-import {
-  connectTranscriptSocket,
-  type TranscriptSocket,
-} from "../../ws/transcriptSocket";
+import { useTranscriptStore } from "../../stores/transcriptStore";
+import { connectTranscriptSocket, type TranscriptSocket } from "../../ws/transcriptSocket";
+
+const statusLabel = (message: string) => {
+  if (message === "mock_mode") return "预置文本演示中，非真实转写";
+  if (message === "dashscope_mode") return "实时转写中";
+  if (message === "connected") return "服务已连接";
+  if (message.startsWith("input_rate_")) return "正在准备转写";
+  if (message === "stopped" || message === "mock_stopped") return "已停止";
+  return message;
+};
 
 export const useConnection = () => {
   const socketRef = useRef<TranscriptSocket | null>(null);
   const audioRef = useRef<AudioClient | null>(null);
+  const startingRef = useRef(false);
 
   const {
-    sessionId,
     connectionState,
     statusMessage,
-    secondsAvailable,
     segmentCount,
     startedAt,
-    setSessionId,
     setConnectionState,
     setStatusMessage,
-    setBufferStats,
+    setSegmentCount,
     setStartedAt,
   } = useConnectionStore();
+  const addTranscript = useTranscriptStore((state) => state.addTranscript);
+  const clearTranscript = useTranscriptStore((state) => state.clearTranscript);
 
-  const { addTranscript, resetTranscript, clearRecoveryMarkers } =
-    useRecoveryStore();
+  useEffect(() => () => {
+    startingRef.current = false;
+    const socket = socketRef.current;
+    socketRef.current = null;
+    socket?.close();
+    const audio = audioRef.current;
+    audioRef.current = null;
+    void audio?.stop();
+    if (socket || audio) {
+      useConnectionStore.getState().setConnectionState("stopped");
+      useConnectionStore.getState().setStartedAt(null);
+    }
+  }, []);
 
-  const listening = connectionState === "listening";
+  const startListening = useCallback(async () => {
+    if (startingRef.current || socketRef.current) return;
+    startingRef.current = true;
+    setConnectionState("connecting");
+    setStatusMessage("正在连接服务");
+    setSegmentCount(0);
+    clearTranscript();
 
-  // Track usage while listening — silent, no re-renders
-  useEffect(() => {
-    if (!listening) return;
-    const id = window.setInterval(() => {
-      useUsageStore.getState().addListeningSeconds(1);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [listening]);
-
-  const startListening = useCallback(
-    async (mode: RecoveryMode) => {
-      if (useUsageStore.getState().isQuotaExceeded()) return;
-      setConnectionState("connecting");
-      setStatusMessage("正在请求麦克风");
-      resetTranscript();
-      clearRecoveryMarkers();
-
-      const socket = connectTranscriptSocket({
-        onOpen: () => setStatusMessage("已连接"),
+    let socket: TranscriptSocket | null = null;
+    try {
+      socket = connectTranscriptSocket({
+        onOpen: () => setStatusMessage("正在请求麦克风"),
         onClose: () => {
-          setConnectionState("stopped");
-          setStatusMessage("连接已关闭");
-        },
-        onError: () => {
+          if (socketRef.current !== socket) return;
+          socketRef.current = null;
+          const audio = audioRef.current;
+          audioRef.current = null;
+          void audio?.stop();
+          setStartedAt(null);
           setConnectionState("error");
-          setStatusMessage("连接异常");
+          setStatusMessage("连接已断开，请重新开始");
         },
         onMessage: (message) => {
-          if (message.type === "session") setSessionId(message.sessionId);
-          if (message.type === "status") setStatusMessage(message.message);
-          if (message.type === "buffer") setBufferStats(message);
+          if (message.type === "status") setStatusMessage(statusLabel(message.message));
+          if (message.type === "buffer") setSegmentCount(message.segmentCount);
           if (message.type === "transcript") addTranscript(message.segment);
-          if (message.type === "error") setStatusMessage(message.message);
+          if (message.type === "error") setStatusMessage(statusLabel(message.message));
         },
       });
-
       socketRef.current = socket;
-
-      try {
-        const audio = await startAudioClient((chunk) =>
-          socket.sendAudio(chunk),
-        );
-        audioRef.current = audio;
-        socket.send({ type: "config", sampleRate: audio.sampleRate });
-        socket.send({ type: "start" });
-        setConnectionState("listening");
-        setStartedAt(Date.now());
-        setStatusMessage(mode === "meeting" ? "正在听会" : "正在听课");
-      } catch {
-        socket.send({ type: "start" });
-        setConnectionState("listening");
-        setStartedAt(Date.now());
-        setStatusMessage(
-          `麦克风不可用，已进入模拟${mode === "meeting" ? "会议" : "课堂"}`,
-        );
+      await socket.opened;
+      const audio = await startAudioClient(
+        (chunk) => socket?.sendAudio(chunk),
+        () => {
+          if (socketRef.current !== socket) return;
+          socketRef.current = null;
+          socket?.close();
+          const activeAudio = audioRef.current;
+          audioRef.current = null;
+          void activeAudio?.stop();
+          setStartedAt(null);
+          setConnectionState("error");
+          setStatusMessage("麦克风已断开，请重新开始");
+        },
+      );
+      if (socketRef.current !== socket) {
+        await audio.stop();
+        return;
       }
-    },
-    [
-      setConnectionState,
-      setStatusMessage,
-      resetTranscript,
-      clearRecoveryMarkers,
-      setSessionId,
-      setBufferStats,
-      addTranscript,
-      setStartedAt,
-    ],
-  );
+      audioRef.current = audio;
+      socket.send({ type: "config", sampleRate: audio.sampleRate });
+      socket.send({ type: "start" });
+      setConnectionState("listening");
+      setStartedAt(Date.now());
+      setStatusMessage("正在准备转写");
+    } catch (error) {
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+        socket?.close();
+        const audio = audioRef.current;
+        audioRef.current = null;
+        void audio?.stop();
+        setStartedAt(null);
+        setConnectionState("error");
+        setStatusMessage(error instanceof Error && error.name === "NotAllowedError"
+          ? "麦克风未获授权，请检查浏览器权限"
+          : "无法开始录音，请检查麦克风和服务连接");
+      }
+    } finally {
+      startingRef.current = false;
+    }
+  }, [setConnectionState, setStatusMessage, clearTranscript, setSegmentCount, addTranscript, setStartedAt]);
 
   const stopListening = useCallback(async () => {
-    socketRef.current?.send({ type: "stop" });
-    socketRef.current?.close();
+    startingRef.current = false;
+    const socket = socketRef.current;
     socketRef.current = null;
-    await audioRef.current?.stop();
+    socket?.send({ type: "stop" });
+    socket?.close();
+    const audio = audioRef.current;
     audioRef.current = null;
-    setConnectionState("stopped");
-    setStatusMessage("已停止");
-    setStartedAt(null);
+    try {
+      await audio?.stop();
+    } finally {
+      setConnectionState("stopped");
+      setStatusMessage("已停止；本次音频未保存");
+      setStartedAt(null);
+    }
   }, [setConnectionState, setStatusMessage, setStartedAt]);
 
-  return {
-    sessionId,
-    connectionState,
-    statusMessage,
-    secondsAvailable,
-    segmentCount,
-    startedAt,
-    listening,
-    startListening,
-    stopListening,
-  };
+  return { connectionState, statusMessage, segmentCount, startedAt, startListening, stopListening };
 };

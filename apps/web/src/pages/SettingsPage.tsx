@@ -1,150 +1,21 @@
-import { useState } from "react";
-import { BookOpen, BriefcaseBusiness, Mail } from "lucide-react";
-import {
-  RECOVERY_WINDOWS,
-  type RecoveryMode,
-  type RecoveryWindowSeconds,
-} from "@daymark/shared";
-import { SegmentedControl } from "../components/SegmentedControl";
-import { useSettingsStore } from "../stores/settingsStore";
-import { useUsageStore } from "../stores/usageStore";
+import { AudioLines, Bot, Database, ShieldCheck } from "lucide-react";
 
-const MODE_OPTIONS = [
-  {
-    value: "classroom" as RecoveryMode,
-    label: "课堂",
-    icon: <BookOpen className="h-3.5 w-3.5" />,
-  },
-  {
-    value: "meeting" as RecoveryMode,
-    label: "会议",
-    icon: <BriefcaseBusiness className="h-3.5 w-3.5" />,
-  },
+const capabilities = [
+  { icon: AudioLines, title: "麦克风", state: "主动开启", description: "仅在录音页点击开始后使用；停止或离开页面会释放麦克风。" },
+  { icon: Database, title: "资料保存", state: "待接入", description: "当前服务没有原始录音持久化或历史资料库。转写只在本次页面中预览。" },
+  { icon: Bot, title: "Agent 检索", state: "待接入", description: "尚未建立历史检索工具与 Agent 对话接口，因此聊天输入暂不可用。" },
 ];
 
-const WINDOW_LABELS: Record<RecoveryWindowSeconds, string> = {
-  30: "30 秒",
-  60: "60 秒",
-  180: "3 分钟",
-};
-
-export const SettingsPage = () => {
-  const { defaultMode, defaultWindow, setDefaultMode, setDefaultWindow } =
-    useSettingsStore();
-  const redeemCode = useUsageStore((s) => s.redeemCode);
-  const quotaUnlocked = useUsageStore((s) => s.quotaUnlocked);
-  const [code, setCode] = useState("");
-  const [redeemResult, setRedeemResult] = useState<"ok" | "fail" | null>(null);
-
-  const handleRedeem = () => {
-    if (redeemCode(code.trim())) {
-      setRedeemResult("ok");
-      setCode("");
-    } else {
-      setRedeemResult("fail");
-      setCode("");
-    }
-    setTimeout(() => setRedeemResult(null), 2000);
-  };
-
-  return (
-    <div className="flex flex-col gap-8 overflow-y-auto pb-4 pt-2">
-      {/* Default mode */}
-      <section>
-        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">默认模式</h3>
-        <p className="mb-3 text-xs text-ink/30">打开应用时默认选择的模式</p>
-        <SegmentedControl
-          value={defaultMode}
-          options={MODE_OPTIONS}
-          onChange={setDefaultMode}
-        />
-      </section>
-
-      {/* Default window */}
-      <section>
-        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">
-          默认时间窗口
-        </h3>
-        <p className="mb-3 text-xs text-ink/30">恢复卡片默认回溯的时间范围</p>
-        <div className="inline-flex items-center gap-1.5">
-          {RECOVERY_WINDOWS.map((window) => (
-            <button
-              key={window}
-              type="button"
-              onClick={() => setDefaultWindow(window)}
-              className={`rounded-xl px-4 py-2.5 text-[13px] font-semibold transition active:scale-[0.97] ${
-                defaultWindow === window
-                  ? "bg-ink text-paper shadow-sm"
-                  : "bg-black/[0.04] text-ink/35"
-              }`}
-            >
-              {WINDOW_LABELS[window]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Feedback */}
-      <section>
-        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">提点意见</h3>
-        <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-black/[0.04]">
-          <p className="text-sm text-ink/50">欢迎反馈使用体验和改进建议</p>
-          <a
-            href="mailto:jo-bo@qq.com"
-            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-moss"
-          >
-            <Mail className="h-3.5 w-3.5" />
-            jo-bo@qq.com
-          </a>
-        </div>
-      </section>
-
-      {/* Redeem code */}
-      <section>
-        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">兑换码</h3>
-        {quotaUnlocked ? (
-          <div className="rounded-2xl bg-moss/[0.06] p-4 ring-1 ring-moss/10">
-            <p className="text-sm font-medium text-moss">已解锁无限使用</p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value);
-                setRedeemResult(null);
-              }}
-              placeholder="输入兑换码"
-              className="flex-1 rounded-full bg-black/[0.04] px-4 py-2.5 text-[13px] text-ink ring-1 ring-black/[0.06] placeholder:text-ink/25 focus:outline-none focus:ring-2 focus:ring-moss/30"
-            />
-            <button
-              type="button"
-              onClick={handleRedeem}
-              disabled={!code.trim()}
-              className="rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-paper transition active:scale-[0.97] disabled:opacity-30"
-            >
-              兑换
-            </button>
-          </div>
-        )}
-        {redeemResult === "ok" && (
-          <p className="mt-2 text-xs text-moss">兑换成功</p>
-        )}
-        {redeemResult === "fail" && (
-          <p className="mt-2 text-xs text-coral">兑换码无效</p>
-        )}
-      </section>
-
-      {/* About */}
-      <section>
-        <h3 className="mb-2 text-[13px] font-semibold text-ink/60">关于</h3>
-        <div className="rounded-2xl bg-white/60 p-4 text-sm ring-1 ring-black/[0.04]">
-          <p className="font-semibold text-ink">Daymark</p>
-          <p className="mt-1 text-ink/50">课堂/会议实时上下文恢复工具</p>
-          <p className="mt-2 text-xs text-ink/25">错过内容时，一键找回。</p>
-        </div>
-      </section>
+export const SettingsPage = () => (
+  <>
+    <section className="mb-10">
+      <p className="eyebrow text-forest">CONTROL / WEB</p>
+      <h1 className="mt-4 text-[clamp(34px,4vw,56px)] font-semibold tracking-[-0.055em] text-ink">设置</h1>
+      <p className="mt-4 max-w-[660px] text-sm leading-7 text-ink/55">查看当前网页预览实际可用的能力。尚未生效的存储与授权选项不会显示成可操作开关。</p>
+    </section>
+    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(270px,.75fr)]">
+      <section className="surface-block p-6 sm:p-8"><p className="eyebrow text-forest">CURRENT CAPABILITIES</p><h2 className="mt-2 text-xl font-semibold text-ink">能力状态</h2><div className="mt-8 grid gap-6">{capabilities.map(({ icon: Icon, title, state, description }) => <div key={title} className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-mist text-forest"><Icon size={20} strokeWidth={1.7} aria-hidden="true" /></span><div className="flex-1"><div className="flex flex-wrap items-center gap-3"><h3 className="text-[14px] font-semibold text-ink">{title}</h3><span className="rounded-full bg-mist px-2.5 py-1 text-[10px] font-semibold text-forest">{state}</span></div><p className="mt-2 max-w-[530px] text-[13px] leading-7 text-ink/55">{description}</p></div></div>)}</div></section>
+      <aside className="rounded-[25px] bg-forest p-6 text-paper sm:p-7"><ShieldCheck size={24} strokeWidth={1.7} aria-hidden="true" /><p className="eyebrow mt-7 text-mint">YOUR CONTROL</p><h2 className="mt-2 text-xl font-semibold leading-8">范围需要明确。</h2><p className="mt-4 text-[13px] leading-7 text-paper/70">以后接入持久资料时，保存位置、处理位置和 Agent 可查范围会分别配置。当前版本没有这些设置，也不会把录音悄悄加入可检索历史。</p></aside>
     </div>
-  );
-};
+  </>
+);

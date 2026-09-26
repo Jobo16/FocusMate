@@ -1,64 +1,74 @@
-import { Clock, History, Home, Settings } from "lucide-react";
+import { ArrowUpRight, AudioLines, MessageCircle, Settings2 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Brand } from "../components/Brand";
+import { getMarketingHref } from "../site/siteSurface";
 import { useRouterStore, type Page } from "../stores/routerStore";
 
 type LayoutProps = {
   children: ReactNode;
 };
 
-const NAV_ITEMS: Array<{ page: Page; label: string; icon: typeof Home }> = [
-  { page: "home", label: "听讲", icon: Home },
-  { page: "history", label: "历史", icon: History },
-  { page: "settings", label: "设置", icon: Settings },
+const NAV_ITEMS: Array<{ page: Page; label: string; icon: typeof AudioLines }> = [
+  { page: "record", label: "录音", icon: AudioLines },
+  { page: "chat", label: "AI 聊天", icon: MessageCircle },
+  { page: "settings", label: "设置", icon: Settings2 },
 ];
 
 export const Layout = ({ children }: LayoutProps) => {
   const { page, navigate } = useRouterStore();
+  const marketingHref = getMarketingHref();
+  const pageTitle = NAV_ITEMS.find((item) => item.page === page)?.label ?? "录音";
 
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-xl flex-col overflow-hidden">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-5 pt-[max(14px,env(safe-area-inset-top))] pb-2">
-        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-moss/60">
-          Daymark
-        </div>
-        {page === "home" && <StatusDot />}
-      </header>
-
-      {/* Main content area */}
-      <div className="flex min-h-0 flex-1 flex-col px-5">{children}</div>
-
-      {/* Bottom navigation */}
-      <nav className="flex items-center justify-around border-t border-black/5 bg-paper/90 px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-sm">
-        {NAV_ITEMS.map((item) => {
-          const active = page === item.page;
-          const Icon = item.icon;
-          return (
+    <div className="workspace-shell">
+      <aside className="workspace-sidebar">
+        <Brand href={marketingHref} />
+        <p className="workspace-sidebar-label">YOUR SPACE / WEB</p>
+        <nav className="workspace-sidebar-nav" aria-label="工作台导航">
+          {NAV_ITEMS.map(({ page: itemPage, label, icon: Icon }) => (
             <button
-              key={item.page}
+              key={itemPage}
               type="button"
-              onClick={() => navigate(item.page)}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-5 py-1.5 transition active:scale-95 ${
-                active ? "text-moss" : "text-ink/30"
-              }`}
+              className={"workspace-nav-item " + (page === itemPage ? "workspace-nav-active" : "")}
+              aria-current={page === itemPage ? "page" : undefined}
+              onClick={() => navigate(itemPage)}
             >
-              <Icon className={`h-5 w-5 ${active ? "stroke-[2.5]" : ""}`} />
-              <span
-                className={`text-[10px] font-semibold ${active ? "text-moss" : "text-ink/30"}`}
-              >
-                {item.label}
-              </span>
+              <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+              <span>{label}</span>
             </button>
-          );
-        })}
+          ))}
+        </nav>
+        <div className="workspace-sidebar-note">
+          <span className="eyebrow">WEB PREVIEW</span>
+          <p>录音提供临时转写预览。历史检索与 Agent 聊天仍在开发中。</p>
+        </div>
+      </aside>
+
+      <div className="workspace-main">
+        <header className="workspace-topbar">
+          <div className="workspace-mobile-brand"><Brand href={marketingHref} /></div>
+          <div className="workspace-breadcrumb"><span>SPACE</span><span>/</span><strong>{pageTitle}</strong></div>
+          <a className="workspace-back-link" href={marketingHref}>
+            产品首页 <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        </header>
+        <main className="workspace-content">{children}</main>
+      </div>
+
+      <nav className="workspace-mobile-nav" aria-label="移动工作台导航">
+        {NAV_ITEMS.map(({ page: itemPage, label, icon: Icon }) => (
+          <button
+            key={itemPage}
+            type="button"
+            className={page === itemPage ? "workspace-mobile-active" : ""}
+            aria-current={page === itemPage ? "page" : undefined}
+            onClick={() => navigate(itemPage)}
+          >
+            <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+            <span>{label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   );
-};
-
-// Minimal status dot shown in header when on home page
-const StatusDot = () => {
-  // We'll import connection state here lazily
-  // For now this is a simple placeholder
-  return null;
 };
